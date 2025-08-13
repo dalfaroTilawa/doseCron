@@ -38,6 +38,14 @@
             </h2>
             <div class="results-actions">
               <button
+                class="copy-btn"
+                title="Copiar fechas al portapapeles"
+                :disabled="!showResults || calculationResults.length === 0"
+                @click="copyResults"
+              >
+                📋 Copiar
+              </button>
+              <button
                 class="clear-btn"
                 title="Limpiar resultados"
                 @click="clearResults"
@@ -259,6 +267,25 @@ const onResultsError = (errorData) => {
 }
 
 // Funciones de acciones
+const copyResults = async () => {
+  if (calculationResults.value.length === 0) return
+
+  try {
+    // Formatear fechas para copiar
+    const text = calculationResults.value.map((dateInfo, index) => 
+      `${index + 1}. ${dateInfo.formatted} (${dateInfo.dateString})`
+    ).join('\n')
+
+    await navigator.clipboard.writeText(text)
+    
+    addNotification('success', '📋 Fechas copiadas al portapapeles')
+    
+  } catch (error) {
+    console.error('Error al copiar:', error)
+    addNotification('error', '❌ Error al copiar al portapapeles')
+  }
+}
+
 const clearResults = () => {
   if (confirm('¿Estás seguro de que quieres limpiar todos los resultados?')) {
     onFormReset()
@@ -418,6 +445,34 @@ onMounted(() => {
   border-color: var(--error);
   transform: translateY(-1px);
   box-shadow: var(--shadow-lg);
+}
+
+.copy-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1.25rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.copy-btn:hover:not(:disabled) {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.copy-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .results-content {

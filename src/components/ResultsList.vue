@@ -1,18 +1,6 @@
 <template>
   <div class="results-list">
-    <!-- Botones de acción -->
-    <div v-if="!isLoading && dates.length > 0" class="results-actions">
-      <button
-        type="button"
-        class="export-btn export-copy"
-        :disabled="isExporting"
-        title="Copiar al portapapeles"
-        @click="copyToClipboard"
-      >
-        <span class="btn-icon">📋</span>
-        <span class="btn-text">Copiar</span>
-      </button>
-    </div>
+    <!-- Botones de acción movidos a App.vue junto al botón Limpiar -->
 
     <!-- Estado de carga -->
     <div v-if="isLoading" class="loading-state">
@@ -155,7 +143,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['export', 'copy', 'error'])
+const emit = defineEmits(['export', 'error'])
 
 // Estado interno
 const isExporting = ref(false)
@@ -203,43 +191,7 @@ const holidayCount = computed(() =>
 )
 
 
-// Copiar al portapapeles
-const copyToClipboard = async () => {
-  if (isExporting.value || props.dates.length === 0) return
-
-  isExporting.value = true
-  exportFeedback.value = null
-
-  try {
-    const text = formattedDates.value.map((dateInfo, index) =>
-      `${index + 1}. ${dateInfo.formatted} (${dateInfo.iso})`
-    ).join('\n')
-
-    await navigator.clipboard.writeText(text)
-
-    exportFeedback.value = {
-      type: 'success',
-      message: '📋 Fechas copiadas al portapapeles'
-    }
-
-    emit('copy', { dates: formattedDates.value, text })
-
-  } catch (error) {
-    console.error('Error al copiar:', error)
-    exportFeedback.value = {
-      type: 'error',
-      message: '❌ Error al copiar al portapapeles'
-    }
-
-    emit('error', { action: 'copy', error })
-  } finally {
-    isExporting.value = false
-
-    setTimeout(() => {
-      exportFeedback.value = null
-    }, 3000)
-  }
-}
+// Funcionalidad de copiado movida a App.vue
 
 // Limpiar feedback cuando cambian las fechas
 watch(() => props.dates, () => {
@@ -248,7 +200,6 @@ watch(() => props.dates, () => {
 
 // Exponer funciones para uso externo
 defineExpose({
-  copyToClipboard,
   formattedDates,
   weekendCount,
   holidayCount
