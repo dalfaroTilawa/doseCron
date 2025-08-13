@@ -535,15 +535,26 @@ const configSummary = computed(() => {
       endDate = addWeeks(startDateObj, formData.duration)
       break
     case 'months':
-      endDate = addMonths(startDateObj, formData.duration)
+      // Usar la misma lógica que useDateCalculator: más restrictivo para meses
+      const monthEnd = addMonths(startDateObj, formData.duration)
+      endDate = addDays(monthEnd, -1)
       break
     case 'years':
       endDate = addYears(startDateObj, formData.duration)
       break
   }
 
-  const totalDays = Math.ceil((endDate - startDateObj) / (1000 * 60 * 60 * 24))
-  const estimatedDates = Math.ceil(totalDays / formData.interval)
+  // Cálculo correcto de fechas estimadas usando la misma lógica del algoritmo principal
+  let estimatedDates = 0
+  let currentDate = startDateObj
+  let iterations = 0
+  const maxIterations = 1000 // Prevenir bucles infinitos
+
+  while (iterations < maxIterations && currentDate < endDate) {
+    estimatedDates++
+    currentDate = addDays(currentDate, formData.interval)
+    iterations++
+  }
 
   const exclusionsList = []
   if (formData.excludeWeekends) exclusionsList.push('fines de semana')
