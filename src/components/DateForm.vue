@@ -282,9 +282,6 @@
           <div class="summary-item">
             <strong>Exclusiones:</strong> {{ configSummary.exclusions }}
           </div>
-          <div class="summary-item">
-            <strong>Fechas estimadas:</strong> ~{{ configSummary.estimatedDates }}
-          </div>
         </div>
       </div>
     </form>
@@ -303,7 +300,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
-import { format, addDays, addWeeks, addMonths, addYears, parseISO, isValid } from 'date-fns'
+import { format, parseISO, isValid } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 // Importar componentes
@@ -525,37 +522,6 @@ const configSummary = computed(() => {
   if (!isFormValid.value) return null
 
   const startDateObj = parseISO(formData.startDate)
-  let endDate
-
-  switch (formData.durationUnit) {
-    case 'days':
-      endDate = addDays(startDateObj, formData.duration)
-      break
-    case 'weeks':
-      endDate = addWeeks(startDateObj, formData.duration)
-      break
-    case 'months':
-      // Usar la misma lógica que useDateCalculator: más restrictivo para meses
-      const monthEnd = addMonths(startDateObj, formData.duration)
-      endDate = addDays(monthEnd, -1)
-      break
-    case 'years':
-      endDate = addYears(startDateObj, formData.duration)
-      break
-  }
-
-  // Cálculo correcto de fechas estimadas usando la misma lógica del algoritmo principal
-  let estimatedDates = 0
-  let currentDate = startDateObj
-  let iterations = 0
-  const maxIterations = 1000 // Prevenir bucles infinitos
-
-  while (iterations < maxIterations && currentDate < endDate) {
-    estimatedDates++
-    currentDate = addDays(currentDate, formData.interval)
-    iterations++
-  }
-
   const exclusionsList = []
   if (formData.excludeWeekends) exclusionsList.push('fines de semana')
   if (formData.excludeHolidays && formData.country) exclusionsList.push('feriados')
@@ -565,8 +531,7 @@ const configSummary = computed(() => {
     interval: `Cada ${formData.interval} día${formData.interval !== 1 ? 's' : ''}`,
     duration: `${formData.duration} ${formData.durationUnit === 'days' ? 'días' : formData.durationUnit === 'weeks' ? 'semanas' : formData.durationUnit === 'months' ? 'meses' : 'años'}`,
     country: selectedCountryName.value,
-    exclusions: exclusionsList.length > 0 ? exclusionsList.join(', ') : 'Ninguna',
-    estimatedDates: estimatedDates
+    exclusions: exclusionsList.length > 0 ? exclusionsList.join(', ') : 'Ninguna'
   }
 })
 
