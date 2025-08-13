@@ -876,6 +876,23 @@ defineExpose({
   background-color: white;
 }
 
+/* Estilos específicos para inputs numéricos */
+.form-input[type="number"] {
+  padding-right: 3rem; /* Espacio extra para los spinners */
+}
+
+/* Ocultar spinners nativos en navegadores WebKit (Chrome, Safari, Edge) */
+.form-input[type="number"]::-webkit-outer-spin-button,
+.form-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Ocultar spinners en Firefox */
+.form-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 .form-input:focus {
   outline: none;
   border-color: #667eea;
