@@ -6,8 +6,8 @@
 // Base URL de la API de Nager.Date
 const API_BASE_URL = 'https://date.nager.at/api/v3'
 
-// Tiempo de vida del cache (7 días en milisegundos)
-const CACHE_TTL = 7 * 24 * 60 * 60 * 1000
+// Tiempo de vida del cache (30 días en milisegundos)
+const CACHE_TTL = 30 * 24 * 60 * 60 * 1000
 
 /**
  * Lista de países soportados con códigos ISO
