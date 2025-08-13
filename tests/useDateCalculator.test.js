@@ -125,7 +125,7 @@ describe('useDateCalculator', () => {
 
   // ========== TESTS COMPREHENSIVOS DEL ALGORITMO ==========
   describe('Algoritmo de cálculo de fechas - Tests exhaustivos', () => {
-    
+
     describe('Bug específico: intervalo 15 días + duración 1 mes', () => {
       it('debería generar exactamente 2 fechas: 13-ago y 28-ago', async () => {
         await calculator.updateConfig({
@@ -144,7 +144,7 @@ describe('useDateCalculator', () => {
         expect(result.length).toBe(2)
         expect(result[0].dateString).toBe('2025-08-13')
         expect(result[1].dateString).toBe('2025-08-28')
-        
+
         // Verificar que NO hay fecha en septiembre
         const septembreDates = result.filter(d => d.dateString.startsWith('2025-09'))
         expect(septembreDates.length).toBe(0)
@@ -410,7 +410,7 @@ describe('useDateCalculator', () => {
 
         expect(result.length).toBeGreaterThan(1)
         expect(result[0].dateString).toBe('2025-01-01')
-        
+
         // Verificar que todas las fechas están dentro del año
         result.forEach(date => {
           const year = date.dateString.substring(0, 4)
@@ -515,7 +515,7 @@ describe('useDateCalculator', () => {
           // Calcular fecha límite manualmente
           const startDate = new Date('2025-01-15')
           let endDate
-          
+
           switch (testCase.unit) {
             case 'days':
               endDate = addDays(startDate, testCase.duration)
@@ -554,7 +554,7 @@ describe('useDateCalculator', () => {
           const prevDate = new Date(result[i-1].dateString)
           const currDate = new Date(result[i].dateString)
           const diffDays = (currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24)
-          
+
           expect(diffDays).toBe(12)
         }
       })

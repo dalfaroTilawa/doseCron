@@ -21,8 +21,8 @@
         :max="max"
         :aria-describedby="errorId"
         :aria-invalid="hasError"
-        @input="handleInput"
         :placeholder="placeholder"
+        @input="handleInput"
         @change="handleChange"
         @blur="handleBlur"
       >

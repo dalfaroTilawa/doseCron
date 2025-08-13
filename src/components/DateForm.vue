@@ -55,7 +55,7 @@
                 :class="['form-input', { 'has-error': fieldErrors.interval }]"
                 :aria-invalid="!!fieldErrors.interval"
                 :aria-describedby="fieldErrors.interval ? 'interval-error' : 'interval-help'"
-                placeholder="15"
+                placeholder="Ej: 15"
                 required
                 @input="onIntervalChange"
                 @blur="validateInterval"
@@ -92,7 +92,7 @@
                   step="1"
                   :class="['form-input', { 'has-error': fieldErrors.duration }]"
                   :aria-invalid="!!fieldErrors.duration"
-                  placeholder="4"
+                  placeholder="Ej: 4"
                   required
                   @input="onDurationChange"
                   @blur="validateDuration"
@@ -259,16 +259,6 @@
           <span class="btn-icon">🗑️</span>
           <span class="btn-text">Resetear</span>
         </button>
-
-        <button
-          type="button"
-          :disabled="isCalculating"
-          class="btn btn-secondary"
-          @click="loadDefaults"
-        >
-          <span class="btn-icon">⚙️</span>
-          <span class="btn-text">Valores por defecto</span>
-        </button>
       </div>
 
       <!-- Resumen de configuración -->
@@ -370,8 +360,8 @@ const calculator = useDateCalculator()
 // Estado del formulario
 const formData = reactive({
   startDate: '',
-  interval: 15,
-  duration: 4,
+  interval: null, // Iniciar vacío, será requerido
+  duration: null, // Iniciar vacío, será requerido
   durationUnit: 'months',
   country: '',
   excludeWeekends: true,
@@ -403,12 +393,15 @@ const countriesList = ref([])
 
 // Cargar configuración inicial
 const loadInitialConfig = () => {
-  // Cargar desde props o configuración guardada
+  // Cargar configuración: props tienen prioridad, luego preferencias del usuario, luego defaults
   const config = {
-    startDate: props.initialConfig.startDate || loadSetting('defaultStartDate', format(new Date(), 'yyyy-MM-dd')),
-    interval: props.initialConfig.interval || loadSetting('defaultInterval', 15),
-    duration: props.initialConfig.duration || loadSetting('defaultDuration', 4),
-    durationUnit: props.initialConfig.durationUnit || loadSetting('defaultDurationUnit', 'months'),
+    // Valores específicos del cálculo: usar props o iniciar vacíos (requeridos)
+    startDate: props.initialConfig.startDate || format(new Date(), 'yyyy-MM-dd'),
+    interval: props.initialConfig.interval || null, // Iniciar vacío, requerido
+    duration: props.initialConfig.duration || null, // Iniciar vacío, requerido
+    durationUnit: props.initialConfig.durationUnit || 'months', // Default razonable
+
+    // Preferencias del usuario: usar props, luego localStorage, luego defaults
     country: props.initialConfig.country || settings.country || 'CR',
     excludeWeekends: props.initialConfig.excludeWeekends !== undefined ? props.initialConfig.excludeWeekends : loadSetting('excludeWeekends', true),
     excludeHolidays: props.initialConfig.excludeHolidays !== undefined ? props.initialConfig.excludeHolidays : loadSetting('excludeHolidays', true)
@@ -440,7 +433,12 @@ const validateStartDate = () => {
 }
 
 const validateInterval = () => {
-  if (!formData.interval || formData.interval < 1) {
+  if (!formData.interval || formData.interval === null || formData.interval === '') {
+    fieldErrors.interval = 'El intervalo es requerido'
+    return false
+  }
+
+  if (formData.interval < 1) {
     fieldErrors.interval = 'El intervalo debe ser mayor a 0'
     return false
   }
@@ -455,7 +453,12 @@ const validateInterval = () => {
 }
 
 const validateDuration = () => {
-  if (!formData.duration || formData.duration < 1) {
+  if (!formData.duration || formData.duration === null || formData.duration === '') {
+    fieldErrors.duration = 'La duración es requerida'
+    return false
+  }
+
+  if (formData.duration < 1) {
     fieldErrors.duration = 'La duración debe ser mayor a 0'
     return false
   }
@@ -562,7 +565,6 @@ const onStartDateChange = (changeData) => {
   if (props.realtimeValidation) {
     validateStartDate()
   }
-  saveFormData()
   emitConfigChange()
 }
 
@@ -570,7 +572,6 @@ const onIntervalChange = () => {
   if (props.realtimeValidation) {
     validateInterval()
   }
-  saveFormData()
   emitConfigChange()
 }
 
@@ -578,24 +579,20 @@ const onDurationChange = () => {
   if (props.realtimeValidation) {
     validateDuration()
   }
-  saveFormData()
   emitConfigChange()
 }
 
 const onDurationUnitChange = () => {
-  saveFormData()
   emitConfigChange()
 }
 
 const onCountryChange = (changeData) => {
   console.log('País cambiado:', changeData)
-  saveFormData()
   emitConfigChange()
 }
 
 const onFiltersChange = (changeData) => {
   console.log('Filtros cambiados:', changeData)
-  saveFormData()
   emitConfigChange()
 }
 
@@ -647,12 +644,12 @@ const resetForm = () => {
   // Resetear a valores por defecto
   Object.assign(formData, {
     startDate: format(new Date(), 'yyyy-MM-dd'),
-    interval: 15,
-    duration: 4,
+    interval: null, // Dejar vacío, requerido
+    duration: null, // Dejar vacío, requerido
     durationUnit: 'months',
-    country: 'CR',
-    excludeWeekends: true,
-    excludeHolidays: true
+    country: settings.country || 'CR', // Mantener preferencia del usuario
+    excludeWeekends: loadSetting('excludeWeekends', true), // Mantener preferencia del usuario
+    excludeHolidays: loadSetting('excludeHolidays', true) // Mantener preferencia del usuario
   })
 
   // Limpiar errores
@@ -666,24 +663,16 @@ const resetForm = () => {
   globalError.value = ''
   hasCalculated.value = false
 
-  saveFormData()
   emit('reset')
 }
 
-const loadDefaults = () => {
-  loadInitialConfig()
-  emit('config-change', { ...formData })
-}
 
-const saveFormData = () => {
-  // Guardar configuración en localStorage
-  saveSetting('defaultStartDate', formData.startDate)
-  saveSetting('defaultInterval', formData.interval)
-  saveSetting('defaultDuration', formData.duration)
-  saveSetting('defaultDurationUnit', formData.durationUnit)
+const saveUserPreferences = () => {
+  // Solo guardar preferencias del usuario, NO valores específicos de cálculo
   saveSetting('country', formData.country)
   saveSetting('excludeWeekends', formData.excludeWeekends)
   saveSetting('excludeHolidays', formData.excludeHolidays)
+  // Nota: NO guardamos startDate, interval, duration, durationUnit
 }
 
 const emitConfigChange = () => {
@@ -695,6 +684,21 @@ const emitConfigChange = () => {
     })
   }
 }
+
+// Auto-guardar preferencias del usuario cuando cambien
+watch(() => formData.country, (newCountry) => {
+  if (newCountry) {
+    saveSetting('country', newCountry)
+  }
+}, { immediate: false })
+
+watch(() => formData.excludeWeekends, (newValue) => {
+  saveSetting('excludeWeekends', newValue)
+}, { immediate: false })
+
+watch(() => formData.excludeHolidays, (newValue) => {
+  saveSetting('excludeHolidays', newValue)
+}, { immediate: false })
 
 const clearGlobalError = () => {
   globalError.value = ''
