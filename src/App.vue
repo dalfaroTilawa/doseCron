@@ -287,48 +287,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Variables CSS - Diseño Moderno */
-:root {
-  --primary: #3b82f6;
-  --primary-dark: #2563eb;
-  --secondary: #6366f1;
-  --accent: #8b5cf6;
-
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
-  --info: #06b6d4;
-
-  --bg-primary: #ffffff;
-  --bg-secondary: #fafbfc;
-  --bg-tertiary: #f1f5f9;
-  --bg-card: #ffffff;
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-
-  --border: #e2e8f0;
-  --border-light: #f1f5f9;
-  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-xl: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-
-  --radius: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-}
-
-[data-theme="dark"] {
-  --bg-primary: #0f172a;
-  --bg-secondary: #0f172a;
-  --bg-tertiary: #1e293b;
-  --bg-card: #1e293b;
-  --text-primary: #f8fafc;
-  --text-secondary: #e2e8f0;
-  --text-muted: #94a3b8;
-  --border: #334155;
-  --border-light: #1e293b;
-}
+/* Usar variables del sistema de estilos global */
 
 /* Reset base */
 * {
@@ -337,12 +296,12 @@ onMounted(() => {
 
 #app {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, #f8fafc 100%);
-  color: var(--text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.6;
-  transition: all 0.3s ease;
-  padding: 2rem 1rem;
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-gray-50) 100%);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  line-height: var(--line-height-base);
+  transition: all var(--transition-base);
+  padding: var(--space-8) var(--space-4);
 }
 
 
@@ -358,7 +317,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: var(--z-modal);
 }
 
 [data-theme="dark"] .loading-overlay {
@@ -372,11 +331,11 @@ onMounted(() => {
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--border);
-  border-top: 3px solid var(--primary);
-  border-radius: 50%;
+  border: 3px solid var(--color-border-primary);
+  border-top: 3px solid var(--color-primary-500);
+  border-radius: var(--radius-full);
   animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
+  margin: 0 auto var(--space-4);
 }
 
 @keyframes spin {
@@ -386,8 +345,8 @@ onMounted(() => {
 
 .loading-text {
   margin: 0;
-  color: var(--text-secondary);
-  font-size: 1rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
 }
 
 
@@ -407,10 +366,10 @@ onMounted(() => {
 /* Secciones - Estilo moderno */
 .form-section,
 .results-section {
-  background: var(--bg-card);
+  background: var(--color-surface-primary);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--color-border-primary);
   overflow: hidden;
   backdrop-filter: blur(10px);
 }
