@@ -80,7 +80,7 @@ export function useDateCalculator(initialConfig = {}) {
   /**
    * Calcula la fecha final basada en duración y unidad
    * @param {Date} startDate - Fecha inicial
-   * @returns {Date} Fecha final
+   * @returns {Date} Fecha final (exclusiva - las fechas deben ser antes de esta)
    */
   const calculateEndDate = (startDate) => {
     const start = startOfDay(startDate)
@@ -91,7 +91,11 @@ export function useDateCalculator(initialConfig = {}) {
       case 'weeks':
         return addWeeks(start, config.duration)
       case 'months':
-        return addMonths(start, config.duration)
+        // Para una duración de "1 mes", queremos que termine antes de cambiar de mes
+        // Por ejemplo: desde 13-ago por 1 mes = hasta antes del 13-sep
+        // Esto significa que la última fecha válida sería 12-sep, no 13-sep
+        const monthEnd = addMonths(start, config.duration)
+        return addDays(monthEnd, -1)  // Un día antes para ser más restrictivo
       case 'years':
         return addYears(start, config.duration)
       default:
@@ -233,14 +237,16 @@ export function useDateCalculator(initialConfig = {}) {
       const maxIterations = 1000 // Prevenir bucles infinitos
 
       // Bucle principal de cálculo
-      while (
-        isBefore(currentDate, endDate) &&
-        iterationCount < maxIterations
-      ) {
+      while (iterationCount < maxIterations) {
+        // Verificar si currentDate está dentro del rango ANTES de procesarla
+        if (!isBefore(currentDate, endDate)) {
+          break
+        }
+        
         // Obtener el siguiente día válido si es necesario
         const validDate = getNextValidDate(currentDate, holidaysMap)
         
-        // Verificar si la fecha válida sigue dentro del rango
+        // Segunda verificación: si la fecha válida está fuera del rango, romper
         if (!isBefore(validDate, endDate)) {
           break
         }

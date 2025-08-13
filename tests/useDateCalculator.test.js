@@ -450,10 +450,11 @@ describe('useDateCalculator', () => {
         await calculator.calculateDates()
         const result = calculator.calculatedDates.value
 
-        expect(result.length).toBe(2)
+        expect(result.length).toBe(3)
         expect(result[0].dateString).toBe('2024-12-20')
         expect(result[1].dateString).toBe('2024-12-30')
-        // 1 mes desde 20-dic es 20-ene 2025, por lo que no hay más fechas
+        expect(result[2].dateString).toBe('2025-01-09')
+        // 1 mes desde 20-dic termina el 19-ene 2025, incluye: 20-dic, 30-dic, 9-ene
       })
 
       it('duración 0 debería retornar array vacío', async () => {
