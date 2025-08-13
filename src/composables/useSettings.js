@@ -4,25 +4,17 @@
  */
 
 import { ref, reactive, computed, watch } from 'vue'
+import { STORAGE_KEYS, DEFAULT_USER_PREFERENCES, logger } from '../config/env.js'
 
-// Claves para localStorage
-const STORAGE_KEYS = {
-  COUNTRY: 'dosecron_country',
-  THEME: 'dosecron_theme',
-  LANGUAGE: 'dosecron_language',
-  USER_PREFERENCES: 'dosecron_preferences'
-}
-
-// Configuración por defecto
+// Configuración por defecto desde variables de entorno
 const DEFAULT_SETTINGS = {
-  country: 'CR',           // Costa Rica por defecto
-  theme: 'light',          // Tema claro por defecto
-  language: 'es',          // Español por defecto
-  excludeWeekends: true,   // Excluir fines de semana por defecto
-  excludeHolidays: true,   // Excluir feriados por defecto
-  defaultInterval: 15,     // Intervalo por defecto (días)
-  defaultDuration: 4,      // Duración por defecto
-  defaultDurationUnit: 'months' // Unidad por defecto
+  country: DEFAULT_USER_PREFERENCES.COUNTRY,
+  theme: DEFAULT_USER_PREFERENCES.THEME,
+  language: DEFAULT_USER_PREFERENCES.LANGUAGE,
+  excludeWeekends: DEFAULT_USER_PREFERENCES.EXCLUDE_WEEKENDS,
+  excludeHolidays: DEFAULT_USER_PREFERENCES.EXCLUDE_HOLIDAYS,
+  // NOTA: Removidas defaultInterval y defaultDuration ya que los campos inician vacíos
+  defaultDurationUnit: DEFAULT_USER_PREFERENCES.DURATION_UNIT
 }
 
 // Estado global compartido (singleton)
@@ -68,12 +60,12 @@ export function useSettings() {
   const safeStorageOperation = (operation, context) => {
     try {
       if (!isLocalStorageAvailable()) {
-        console.warn(`[useSettings] localStorage no disponible para: ${context}`)
+        logger.warn(`localStorage no disponible para: ${context}`)
         return null
       }
       return operation()
     } catch (err) {
-      console.error(`[useSettings] Error en ${context}:`, err)
+      logger.error(`Error en ${context}:`, err)
       error.value = `Error de almacenamiento: ${err.message}`
       return null
     }
@@ -86,7 +78,7 @@ export function useSettings() {
    */
   const saveCountry = (country) => {
     if (!country || typeof country !== 'string') {
-      console.warn('[useSettings] País inválido:', country)
+      logger.warn('País inválido:', country)
       return false
     }
 
@@ -163,7 +155,7 @@ export function useSettings() {
    */
   const saveSetting = (key, value) => {
     if (!key || value === undefined) {
-      console.warn('[useSettings] Clave o valor inválido:', { key, value })
+      logger.warn('Clave o valor inválido:', { key, value })
       return false
     }
 
@@ -275,7 +267,7 @@ export function useSettings() {
       // Guardar en localStorage
       return savePreferences(validSettings)
     } catch (err) {
-      console.error('[useSettings] Error importando configuraciones:', err)
+      logger.error('Error importando configuraciones:', err)
       error.value = `Error al importar: ${err.message}`
       return false
     }
@@ -294,17 +286,17 @@ export function useSettings() {
 
       // Si no hay preferencias guardadas, usar valores por defecto
       if (!loadedPrefs) {
-        console.log('[useSettings] No hay preferencias guardadas, usando valores por defecto')
+        logger.info('No hay preferencias guardadas, usando valores por defecto')
         // Guardar configuración por defecto
         savePreferences(DEFAULT_SETTINGS)
       } else {
-        console.log('[useSettings] Preferencias cargadas:', loadedPrefs)
+        logger.debug('Preferencias cargadas:', loadedPrefs)
       }
 
       isLoaded.value = true
       return true
     } catch (err) {
-      console.error('[useSettings] Error inicializando configuraciones:', err)
+      logger.error('Error inicializando configuraciones:', err)
       error.value = `Error de inicialización: ${err.message}`
       isLoaded.value = false
       return false
@@ -320,7 +312,7 @@ export function useSettings() {
       Object.assign(settings, DEFAULT_SETTINGS)
       return savePreferences(DEFAULT_SETTINGS)
     } catch (err) {
-      console.error('[useSettings] Error reseteando configuraciones:', err)
+      logger.error('Error reseteando configuraciones:', err)
       error.value = `Error al resetear: ${err.message}`
       return false
     }

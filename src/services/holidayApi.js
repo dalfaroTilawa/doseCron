@@ -3,11 +3,12 @@
  * Incluye cache en localStorage y manejo de errores
  */
 
-// Base URL de la API de Nager.Date
-const API_BASE_URL = 'https://date.nager.at/api/v3'
+import { API_CONFIG, CACHE_CONFIG, logger } from '../config/env.js'
 
-// Tiempo de vida del cache (30 días en milisegundos)
-const CACHE_TTL = 30 * 24 * 60 * 60 * 1000
+// Configuración desde variables de entorno
+const API_BASE_URL = API_CONFIG.BASE_URL
+const CACHE_TTL = CACHE_CONFIG.TTL
+const API_TIMEOUT = API_CONFIG.TIMEOUT
 
 /**
  * Lista de países soportados con códigos ISO
@@ -102,7 +103,7 @@ const getCachedData = (key) => {
 
     return data.holidays
   } catch (error) {
-    console.warn('Error al leer cache:', error)
+    logger.warn('Error al leer cache:', error)
     localStorage.removeItem(key)
     return null
   }
@@ -121,7 +122,7 @@ const setCachedData = (key, holidays) => {
     }
     localStorage.setItem(key, JSON.stringify(data))
   } catch (error) {
-    console.warn('Error al guardar en cache:', error)
+    logger.warn('Error al guardar en cache:', error)
   }
 }
 
@@ -131,7 +132,7 @@ const setCachedData = (key, holidays) => {
  * @param {number} timeout - Timeout en milisegundos (default: 10000)
  * @returns {Promise<any>} Respuesta de la API
  */
-const fetchWithTimeout = async (url, timeout = 10000) => {
+const fetchWithTimeout = async (url, timeout = API_TIMEOUT) => {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
@@ -203,13 +204,13 @@ export const getHolidays = async (year, countryCode) => {
   const cachedHolidays = getCachedData(cacheKey)
 
   if (cachedHolidays) {
-    console.log(`Feriados cargados desde cache: ${upperCountryCode} ${year}`)
+    logger.info(`Feriados cargados desde cache: ${upperCountryCode} ${year}`)
     return cachedHolidays
   }
 
   // Si no hay cache, hacer petición a la API
   try {
-    console.log(`Obteniendo feriados desde API: ${upperCountryCode} ${year}`)
+    logger.info(`Obteniendo feriados desde API: ${upperCountryCode} ${year}`)
     const url = `${API_BASE_URL}/PublicHolidays/${year}/${upperCountryCode}`
     const holidays = await fetchWithTimeout(url)
 
@@ -235,7 +236,7 @@ export const getHolidays = async (year, countryCode) => {
 
     return processedHolidays
   } catch (error) {
-    console.error('Error al obtener feriados:', error)
+    logger.error('Error al obtener feriados:', error)
 
     // Proporcionar mensaje de error más específico
     if (error.message.includes('404')) {
@@ -283,7 +284,7 @@ export const isHoliday = async (date, countryCode) => {
 
     return holiday || null
   } catch (error) {
-    console.error('Error al verificar feriado:', error)
+    logger.error('Error al verificar feriado:', error)
     throw error
   }
 }
@@ -299,14 +300,14 @@ export const clearHolidaysCache = (countryCode = null, year = null) => {
       // Limpiar cache específico
       const key = getCacheKey(countryCode.toUpperCase(), year)
       localStorage.removeItem(key)
-      console.log(`Cache limpiado: ${key}`)
+      logger.debug(`Cache limpiado: ${key}`)
     } else if (countryCode) {
       // Limpiar todos los años de un país
       const prefix = `holidays_${countryCode.toUpperCase()}_`
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith(prefix)) {
           localStorage.removeItem(key)
-          console.log(`Cache limpiado: ${key}`)
+          logger.debug(`Cache limpiado: ${key}`)
         }
       })
     } else {
@@ -314,12 +315,12 @@ export const clearHolidaysCache = (countryCode = null, year = null) => {
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('holidays_')) {
           localStorage.removeItem(key)
-          console.log(`Cache limpiado: ${key}`)
+          logger.debug(`Cache limpiado: ${key}`)
         }
       })
     }
   } catch (error) {
-    console.warn('Error al limpiar cache:', error)
+    logger.warn('Error al limpiar cache:', error)
   }
 }
 
@@ -360,7 +361,7 @@ export const getCacheStats = () => {
       totalSizeKB: Math.round(stats.totalSize / 1024)
     }
   } catch (error) {
-    console.warn('Error al obtener estadísticas del cache:', error)
+    logger.warn('Error al obtener estadísticas del cache:', error)
     return stats
   }
 }

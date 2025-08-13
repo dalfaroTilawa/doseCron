@@ -22,6 +22,7 @@ import {
 import { es } from 'date-fns/locale'
 import { getHolidays, isHoliday } from '../services/holidayApi.js'
 import { useSettings } from './useSettings.js'
+import { APP_CONFIG, logger } from '../config/env.js'
 
 /**
  * Composable principal para cálculo de fechas recurrentes
@@ -150,7 +151,7 @@ export function useDateCalculator(initialConfig = {}) {
 
       return allHolidays
     } catch (err) {
-      console.warn('Error cargando feriados:', err.message)
+      logger.warn('Error cargando feriados:', err.message)
       return new Map()
     }
   }
@@ -185,7 +186,7 @@ export function useDateCalculator(initialConfig = {}) {
   const getNextValidDate = (date, holidaysMap) => {
     let currentDate = startOfDay(date)
     let attempts = 0
-    const maxAttempts = 30 // Prevenir bucles infinitos
+    const maxAttempts = APP_CONFIG.MAX_ATTEMPTS // Prevenir bucles infinitos
 
     while (attempts < maxAttempts) {
       const exclusionInfo = checkExclusions(currentDate, holidaysMap)
@@ -199,7 +200,7 @@ export function useDateCalculator(initialConfig = {}) {
     }
 
     // Si no encontramos día válido en 30 intentos, devolver la fecha original
-    console.warn('No se pudo encontrar día válido después de 30 intentos')
+    logger.warn(`No se pudo encontrar día válido después de ${APP_CONFIG.MAX_ATTEMPTS} intentos`)
     return date
   }
 
@@ -234,7 +235,7 @@ export function useDateCalculator(initialConfig = {}) {
       const dates = []
       let currentDate = startOfDay(startDate)
       let iterationCount = 0
-      const maxIterations = 1000 // Prevenir bucles infinitos
+      const maxIterations = APP_CONFIG.MAX_ITERATIONS // Prevenir bucles infinitos
 
       // Bucle principal de cálculo
       while (iterationCount < maxIterations) {
@@ -275,7 +276,7 @@ export function useDateCalculator(initialConfig = {}) {
       }
 
       if (iterationCount >= maxIterations) {
-        console.warn('Cálculo detenido: se alcanzó el máximo de iteraciones')
+        logger.warn(`Cálculo detenido: se alcanzó el máximo de ${APP_CONFIG.MAX_ITERATIONS} iteraciones`)
       }
 
       calculatedDates.value = dates
@@ -283,7 +284,7 @@ export function useDateCalculator(initialConfig = {}) {
 
     } catch (err) {
       error.value = err.message || 'Error al calcular fechas'
-      console.error('Error en calculateDates:', err)
+      logger.error('Error en calculateDates:', err)
       return []
     } finally {
       loading.value = false
