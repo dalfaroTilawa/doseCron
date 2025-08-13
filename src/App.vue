@@ -424,6 +424,13 @@ onMounted(() => {
   font-size: 1.5rem;
 }
 
+.results-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .clear-btn {
   background: transparent;
   border: 1px solid var(--border);
