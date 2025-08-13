@@ -239,6 +239,12 @@ export function useDateCalculator(initialConfig = {}) {
       ) {
         // Obtener el siguiente día válido si es necesario
         const validDate = getNextValidDate(currentDate, holidaysMap)
+        
+        // Verificar si la fecha válida sigue dentro del rango
+        if (!isBefore(validDate, endDate)) {
+          break
+        }
+        
         const exclusionInfo = checkExclusions(validDate, holidaysMap)
 
         // Crear objeto de fecha
