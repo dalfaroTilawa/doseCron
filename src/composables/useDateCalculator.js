@@ -234,7 +234,7 @@ export function useDateCalculator(initialConfig = {}) {
 
       // Bucle principal de cálculo
       while (
-        (isBefore(currentDate, endDate) || isEqual(currentDate, endDate)) &&
+        isBefore(currentDate, endDate) &&
         iterationCount < maxIterations
       ) {
         // Obtener el siguiente día válido si es necesario
