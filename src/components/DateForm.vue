@@ -756,14 +756,14 @@ defineExpose({
   text-align: center;
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
-  border-bottom: 2px solid #f1f5f9;
+  border-bottom: 2px solid var(--color-border-primary);
 }
 
 .form-title {
   margin: 0 0 0.5rem 0;
   font-size: 1.75rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--color-text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -777,7 +777,7 @@ defineExpose({
 .form-description {
   margin: 0;
   font-size: 1rem;
-  color: #64748b;
+  color: var(--color-text-secondary);
   line-height: 1.5;
   max-width: 500px;
   margin: 0 auto;
@@ -793,7 +793,7 @@ defineExpose({
   margin: 0 0 2rem 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-text-primary);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -824,7 +824,7 @@ defineExpose({
 /* Form inputs */
 .field-label {
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-primary);
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -832,7 +832,7 @@ defineExpose({
 }
 
 .required-indicator {
-  color: #ef4444;
+  color: var(--color-error);
   font-weight: bold;
 }
 
@@ -845,11 +845,12 @@ defineExpose({
 .form-input {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid #e1e5e9;
+  border: 2px solid var(--color-border-primary);
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  background-color: white;
+  background-color: var(--color-surface-primary);
+  color: var(--color-text-primary);
 }
 
 /* Estilos específicos para inputs numéricos */
@@ -871,18 +872,18 @@ defineExpose({
 
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px var(--color-primary-100);
 }
 
 .form-input.has-error {
-  border-color: #ef4444;
+  border-color: var(--color-error);
 }
 
 .input-suffix {
   position: absolute;
   right: 0.75rem;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 0.875rem;
   font-weight: 500;
   pointer-events: none;
@@ -890,10 +891,11 @@ defineExpose({
 
 .form-select {
   padding: 0.75rem;
-  border: 2px solid #e1e5e9;
+  border: 2px solid var(--color-border-primary);
   border-radius: 8px;
   font-size: 1rem;
-  background-color: white;
+  background-color: var(--color-surface-primary);
+  color: var(--color-text-primary);
   cursor: pointer;
   transition: border-color 0.3s ease;
   min-width: 120px;
@@ -901,8 +903,8 @@ defineExpose({
 
 .form-select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px var(--color-primary-100);
 }
 
 .duration-inputs {
@@ -917,13 +919,13 @@ defineExpose({
 
 /* Messages */
 .error-message {
-  color: #ef4444;
+  color: var(--color-error);
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
 
 .help-text {
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 0.875rem;
   margin-top: 0.25rem;
   line-height: 1.4;
@@ -933,16 +935,16 @@ defineExpose({
 .form-warnings {
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background-color: #fef3c7;
+  background-color: var(--color-warning-light);
   border-radius: 8px;
-  border-left: 4px solid #f59e0b;
+  border-left: 4px solid var(--color-warning);
 }
 
 .warning-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #92400e;
+  color: var(--color-warning-dark);
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
 }
@@ -988,24 +990,24 @@ defineExpose({
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-400) 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px var(--color-primary-200);
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 16px var(--color-primary-300);
 }
 
 .btn-secondary {
-  background-color: #e2e8f0;
-  color: #475569;
-  border: 1px solid #cbd5e1;
+  background-color: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-primary);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: #cbd5e1;
+  background-color: var(--color-surface-tertiary);
   transform: translateY(-1px);
 }
 
@@ -1040,16 +1042,16 @@ defineExpose({
 .config-summary {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background-color: #f0f9ff;
+  background-color: var(--color-primary-50);
   border-radius: 12px;
-  border: 1px solid #bae6fd;
+  border: 1px solid var(--color-primary-200);
 }
 
 .summary-title {
   margin: 0 0 1rem 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #0369a1;
+  color: var(--color-primary-500);
 }
 
 .summary-content {
@@ -1060,7 +1062,7 @@ defineExpose({
 
 .summary-item {
   font-size: 0.9rem;
-  color: #0c4a6e;
+  color: var(--color-text-primary);
   line-height: 1.4;
 }
 
@@ -1070,11 +1072,11 @@ defineExpose({
   position: fixed;
   top: 1rem;
   right: 1rem;
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: var(--color-error-light);
+  color: var(--color-error-dark);
   padding: 1rem;
   border-radius: 8px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--color-error);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
@@ -1109,7 +1111,7 @@ defineExpose({
 .error-dismiss {
   background: none;
   border: none;
-  color: #991b1b;
+  color: var(--color-error-dark);
   cursor: pointer;
   font-size: 1.1rem;
   padding: 0.25rem;
@@ -1175,91 +1177,7 @@ defineExpose({
   }
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .date-form {
-    background-color: #1f2937;
-    color: #f9fafb;
-  }
-
-  .form-header {
-    border-bottom-color: #374151;
-  }
-
-  .form-title {
-    color: #f9fafb;
-  }
-
-  .form-description {
-    color: #d1d5db;
-  }
-
-  .form-section {
-    background-color: #374151;
-    border-color: #4b5563;
-  }
-
-  .section-title {
-    color: #f3f4f6;
-  }
-
-  .field-label {
-    color: #e5e7eb;
-  }
-
-  .form-input,
-  .form-select {
-    background-color: #4b5563;
-    border-color: #6b7280;
-    color: #f9fafb;
-  }
-
-  .form-input:focus,
-  .form-select:focus {
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-  }
-
-  .help-text {
-    color: #9ca3af;
-  }
-
-  .btn-secondary {
-    background-color: #4b5563;
-    color: #e5e7eb;
-    border-color: #6b7280;
-  }
-
-  .btn-secondary:hover:not(:disabled) {
-    background-color: #6b7280;
-  }
-
-  .config-summary {
-    background-color: #1e40af;
-    border-color: #3b82f6;
-  }
-
-  .summary-title {
-    color: #bfdbfe;
-  }
-
-  .summary-item {
-    color: #dbeafe;
-  }
-
-  /* Collapsible sections - dark mode */
-  .toggle-text {
-    color: #f9fafb;
-  }
-
-  .toggle-hint {
-    color: #6b7280;
-  }
-
-  .toggle-icon {
-    color: #6b7280;
-  }
-}
+/* Dark mode is handled by CSS variables */
 
 /* Collapsible sections */
 .collapsible-section {
@@ -1277,18 +1195,18 @@ defineExpose({
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 1rem;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
   text-align: left;
   width: 100%;
   border-radius: 4px;
 }
 
 .collapsible-toggle:hover .toggle-text {
-  color: #93c5fd;
+  color: var(--color-primary-400);
 }
 
 .collapsible-toggle:hover .toggle-icon {
-  color: #93c5fd;
+  color: var(--color-primary-400);
 }
 
 .collapsible-toggle:focus {
@@ -1307,18 +1225,18 @@ defineExpose({
   line-height: 1;
   flex-shrink: 0;
   transition: transform 0.2s ease;
-  color: #e2e8f0;
+  color: var(--color-text-muted);
 }
 
 .toggle-text {
   font-weight: 600;
-  color: #ffffff;
+  color: var(--color-text-primary);
   font-size: 1rem;
 }
 
 .toggle-hint {
   font-size: 0.875rem;
-  color: #cbd5e1;
+  color: var(--color-text-muted);
   font-weight: 400;
   margin-left: auto;
 }
@@ -1370,27 +1288,27 @@ defineExpose({
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background-color: var(--color-surface-secondary);
+  border: 1px solid var(--color-border-primary);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 0.9rem;
-  color: #475569;
+  color: var(--color-text-primary);
 }
 
 .theme-option:hover {
-  background-color: #f1f5f9;
-  border-color: #cbd5e1;
+  background-color: var(--color-surface-tertiary);
+  border-color: var(--color-border-secondary);
   transform: translateY(-1px);
 }
 
 .theme-option.active {
-  background-color: #667eea;
-  border-color: #667eea;
+  background-color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
   color: white;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 2px 4px var(--color-primary-200);
 }
 
 .theme-option-icon {

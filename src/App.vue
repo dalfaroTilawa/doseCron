@@ -416,7 +416,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
   letter-spacing: -0.025em;
 }
 
@@ -433,10 +433,10 @@ onMounted(() => {
 
 .clear-btn {
   background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
   padding: 0.75rem 1.25rem;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 0.875rem;
@@ -447,19 +447,19 @@ onMounted(() => {
 }
 
 .clear-btn:hover {
-  background: var(--error);
+  background: var(--color-error);
   color: white;
-  border-color: var(--error);
+  border-color: var(--color-error);
   transform: translateY(-1px);
   box-shadow: var(--shadow-lg);
 }
 
 .copy-btn {
   background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
   padding: 0.75rem 1.25rem;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 0.875rem;
@@ -470,9 +470,9 @@ onMounted(() => {
 }
 
 .copy-btn:hover:not(:disabled) {
-  background: var(--primary);
+  background: var(--color-primary-500);
   color: white;
-  border-color: var(--primary);
+  border-color: var(--color-primary-500);
   transform: translateY(-1px);
   box-shadow: var(--shadow-lg);
 }
@@ -509,14 +509,14 @@ onMounted(() => {
 .footer-text {
   margin: 0 0 0.5rem 0;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .footer-meta {
   margin: 0;
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   font-weight: 400;
 }
 
@@ -537,18 +537,18 @@ onMounted(() => {
   align-items: center;
   gap: 1rem;
   padding: 1.25rem 1.5rem;
-  background: var(--bg-card);
+  background: var(--color-surface-primary);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--color-border-light);
   backdrop-filter: blur(10px);
   animation: slideInRight 0.3s ease-out;
 }
 
-.notification-success { border-left-color: var(--success); }
-.notification-error { border-left-color: var(--error); }
-.notification-warning { border-left-color: var(--warning); }
-.notification-info { border-left-color: var(--info); }
+.notification-success { border-left-color: var(--color-success); }
+.notification-error { border-left-color: var(--color-error); }
+.notification-warning { border-left-color: var(--color-warning); }
+.notification-info { border-left-color: var(--color-info); }
 
 @keyframes slideInRight {
   from { opacity: 0; transform: translateX(100%); }
@@ -563,23 +563,23 @@ onMounted(() => {
 .notification-message {
   flex: 1;
   font-size: 0.9rem;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
 }
 
 .notification-close {
   background: none;
   border: none;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   cursor: pointer;
   font-size: 1rem;
   padding: 0.25rem;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   transition: all 0.3s ease;
 }
 
 .notification-close:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
 }
 
 /* Error global */
@@ -588,7 +588,7 @@ onMounted(() => {
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--error);
+  background: var(--color-error);
   color: white;
   padding: 1rem;
   box-shadow: var(--shadow-lg);
@@ -627,7 +627,7 @@ onMounted(() => {
   cursor: pointer;
   font-size: 1.2rem;
   padding: 0.5rem;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   transition: all 0.3s ease;
 }
 

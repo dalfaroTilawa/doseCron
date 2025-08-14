@@ -210,7 +210,7 @@ defineExpose({
 .results-list {
   display: flex;
   flex-direction: column;
-  background-color: white;
+  background-color: var(--color-surface-primary);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
@@ -225,8 +225,8 @@ defineExpose({
   flex-wrap: wrap;
   justify-content: center;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
-  background-color: #f8fafc;
+  border-bottom: 1px solid var(--color-border-primary);
+  background-color: var(--color-surface-secondary);
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -236,8 +236,8 @@ defineExpose({
   align-items: center;
   gap: 0.25rem;
   padding: 0.5rem 0.75rem;
-  background-color: #667eea;
-  border: 1px solid #667eea;
+  background-color: var(--color-primary-500);
+  border: 1px solid var(--color-primary-500);
   border-radius: 6px;
   color: white;
   font-size: 0.875rem;
@@ -248,8 +248,8 @@ defineExpose({
 }
 
 .export-btn:hover:not(:disabled) {
-  background-color: #5a67d8;
-  border-color: #5a67d8;
+  background-color: var(--color-primary-400);
+  border-color: var(--color-primary-400);
   transform: translateY(-1px);
 }
 
@@ -281,8 +281,8 @@ defineExpose({
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid #e1e5e9;
-  border-top: 3px solid #667eea;
+  border: 3px solid var(--color-border-primary);
+  border-top: 3px solid var(--color-primary-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -295,7 +295,7 @@ defineExpose({
 
 .loading-text {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 1rem;
 }
 
@@ -316,14 +316,14 @@ defineExpose({
 
 .empty-title {
   margin: 0 0 0.5rem 0;
-  color: #374151;
+  color: var(--color-text-primary);
   font-size: 1.25rem;
   font-weight: 600;
 }
 
 .empty-message {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 1rem;
   line-height: 1.5;
   max-width: 400px;
@@ -341,7 +341,7 @@ defineExpose({
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: var(--color-border-secondary) transparent;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -356,12 +356,12 @@ defineExpose({
 }
 
 .dates-scroll-area::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
+  background-color: var(--color-border-secondary);
   border-radius: 3px;
 }
 
 .dates-scroll-area::-webkit-scrollbar-thumb:hover {
-  background-color: #94a3b8;
+  background-color: var(--color-border-primary);
 }
 
 .dates-list {
@@ -376,7 +376,7 @@ defineExpose({
   align-items: flex-start;
   gap: 1rem;
   padding: 1rem 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-border-light);
   transition: background-color 0.2s ease;
   width: 100%;
   max-width: 100%;
@@ -389,11 +389,11 @@ defineExpose({
 }
 
 .date-item:hover {
-  background-color: #f8fafc;
+  background-color: var(--color-surface-secondary);
 }
 
 .date-item.is-today {
-  background-color: rgba(16, 185, 129, 0.05);
+  background-color: var(--color-success-light);
 }
 
 .date-number {
@@ -402,16 +402,16 @@ defineExpose({
   justify-content: center;
   min-width: 2rem;
   height: 2rem;
-  background-color: #f1f5f9;
+  background-color: var(--color-surface-secondary);
   border-radius: 50%;
   font-weight: 600;
   font-size: 0.875rem;
-  color: #475569;
+  color: var(--color-text-primary);
   flex-shrink: 0;
 }
 
 .date-item.is-today .date-number {
-  background-color: #10b981;
+  background-color: var(--color-success);
   color: white;
 }
 
@@ -426,7 +426,7 @@ defineExpose({
 .date-formatted {
   font-size: 1rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin-bottom: 0.25rem;
   line-height: 1.4;
 }
@@ -441,7 +441,7 @@ defineExpose({
 
 .date-iso {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-family: 'Courier New', monospace;
 }
 
@@ -462,25 +462,25 @@ defineExpose({
 }
 
 .badge-today {
-  background-color: #dcfce7;
-  color: #166534;
+  background-color: var(--color-success-light);
+  color: var(--color-success-dark);
 }
 
 .badge-weekend {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: var(--color-warning-light);
+  color: var(--color-warning-dark);
 }
 
 .badge-holiday {
-  background-color: #fecaca;
-  color: #991b1b;
+  background-color: var(--color-error-light);
+  color: var(--color-error-dark);
 }
 
 /* Resumen */
 .results-summary {
   padding: 1rem 1.5rem;
-  background-color: #f8fafc;
-  border-top: 1px solid #e2e8f0;
+  background-color: var(--color-surface-secondary);
+  border-top: 1px solid var(--color-border-primary);
 }
 
 .summary-stats {
@@ -495,7 +495,7 @@ defineExpose({
   align-items: center;
   gap: 0.25rem;
   font-size: 0.875rem;
-  color: #475569;
+  color: var(--color-text-primary);
 }
 
 .stat-icon {
@@ -516,15 +516,15 @@ defineExpose({
 }
 
 .export-feedback.success {
-  background-color: #dcfce7;
-  color: #166534;
-  border-top: 2px solid #22c55e;
+  background-color: var(--color-success-light);
+  color: var(--color-success-dark);
+  border-top: 2px solid var(--color-success);
 }
 
 .export-feedback.error {
-  background-color: #fecaca;
-  color: #991b1b;
-  border-top: 2px solid #ef4444;
+  background-color: var(--color-error-light);
+  color: var(--color-error-dark);
+  border-top: 2px solid var(--color-error);
 }
 
 @keyframes slideIn {
@@ -586,58 +586,5 @@ defineExpose({
   }
 }
 
-/* Modo oscuro */
-@media (prefers-color-scheme: dark) {
-  .results-list {
-    background-color: #1f2937;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .results-actions {
-    background-color: #374151;
-    border-bottom-color: #4b5563;
-  }
-
-  .date-item:hover {
-    background-color: #374151;
-  }
-
-  .date-item.is-today {
-    background-color: rgba(16, 185, 129, 0.1);
-  }
-
-  .date-number {
-    background-color: #374151;
-    color: #d1d5db;
-  }
-
-  .date-formatted {
-    color: #f9fafb;
-  }
-
-  .date-iso {
-    color: #9ca3af;
-  }
-
-  .empty-title {
-    color: #f9fafb;
-  }
-
-  .empty-message {
-    color: #9ca3af;
-  }
-
-  .loading-text {
-    color: #9ca3af;
-  }
-
-  .results-summary {
-    background-color: #374151;
-    border-top-color: #4b5563;
-  }
-
-  .stat-item {
-    color: #d1d5db;
-  }
-}
+/* Dark mode is handled by CSS variables */
 </style>
