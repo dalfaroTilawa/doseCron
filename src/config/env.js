@@ -12,15 +12,16 @@
  */
 const getEnvVar = (key, defaultValue, type = 'string') => {
   const value = import.meta.env[key]
-  
+
   if (value === undefined || value === null || value === '') {
     return defaultValue
   }
 
   switch (type) {
-    case 'number':
+    case 'number': {
       const numValue = Number(value)
       return isNaN(numValue) ? defaultValue : numValue
+    }
     case 'boolean':
       return value === 'true' || value === true
     default:
@@ -85,19 +86,19 @@ export const logger = {
       console.error(`[DoseCron] ERROR: ${message}`, ...args)
     }
   },
-  
+
   warn: (message, ...args) => {
     if (['warn', 'info', 'debug'].includes(APP_CONFIG.LOG_LEVEL)) {
       console.warn(`[DoseCron] WARN: ${message}`, ...args)
     }
   },
-  
+
   info: (message, ...args) => {
     if (['info', 'debug'].includes(APP_CONFIG.LOG_LEVEL)) {
       console.info(`[DoseCron] INFO: ${message}`, ...args)
     }
   },
-  
+
   debug: (message, ...args) => {
     if (APP_CONFIG.DEBUG_MODE && APP_CONFIG.LOG_LEVEL === 'debug') {
       console.debug(`[DoseCron] DEBUG: ${message}`, ...args)

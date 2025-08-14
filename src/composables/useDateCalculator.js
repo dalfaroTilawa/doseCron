@@ -15,14 +15,13 @@ import {
   parseISO,
   isBefore,
   isAfter,
-  isEqual,
-  startOfDay,
-  isSameDay
+  startOfDay
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { getHolidays, isHoliday } from '../services/holidayApi.js'
+import { getHolidays } from '../services/holidayApi.js'
 import { useSettings } from './useSettings.js'
 import { APP_CONFIG, logger } from '../config/env.js'
+import { createCacheManager } from '../utils/storage.js'
 
 /**
  * Composable principal para cálculo de fechas recurrentes
@@ -37,7 +36,8 @@ export function useDateCalculator(initialConfig = {}) {
   const loading = ref(false)
   const error = ref('')
   const calculatedDates = ref([])
-  const holidaysCache = ref(new Map()) // Cache interno para feriados
+  // Cache manager para feriados con TTL de 24 horas
+  const holidaysCache = createCacheManager('holidays_', 86400000, 'HolidaysCache')
 
   // Configuración reactiva usando valores guardados o por defecto
   const config = reactive({
@@ -91,12 +91,13 @@ export function useDateCalculator(initialConfig = {}) {
         return addDays(start, config.duration)
       case 'weeks':
         return addWeeks(start, config.duration)
-      case 'months':
+      case 'months': {
         // Para una duración de "1 mes", queremos que termine antes de cambiar de mes
         // Por ejemplo: desde 13-ago por 1 mes = hasta antes del 13-sep
         // Esto significa que la última fecha válida sería 12-sep, no 13-sep
         const monthEnd = addMonths(start, config.duration)
         return addDays(monthEnd, -1)  // Un día antes para ser más restrictivo
+      }
       case 'years':
         return addYears(start, config.duration)
       default:
@@ -131,10 +132,10 @@ export function useDateCalculator(initialConfig = {}) {
       for (const year of years) {
         const cacheKey = `${config.country}_${year}`
 
-        // Verificar cache interno primero
-        if (holidaysCache.value.has(cacheKey)) {
-          const yearHolidays = holidaysCache.value.get(cacheKey)
-          yearHolidays.forEach(holiday => {
+        // Verificar cache con TTL primero
+        const cachedHolidays = holidaysCache.get(cacheKey)
+        if (cachedHolidays) {
+          cachedHolidays.forEach(holiday => {
             allHolidays.set(holiday.date, holiday)
           })
           continue
@@ -142,7 +143,7 @@ export function useDateCalculator(initialConfig = {}) {
 
         // Cargar desde API/localStorage
         const yearHolidays = await getHolidays(year, config.country)
-        holidaysCache.value.set(cacheKey, yearHolidays)
+        holidaysCache.set(cacheKey, yearHolidays)
 
         yearHolidays.forEach(holiday => {
           allHolidays.set(holiday.date, holiday)
@@ -331,7 +332,10 @@ export function useDateCalculator(initialConfig = {}) {
     loading.value = false
     error.value = ''
     calculatedDates.value = []
-    holidaysCache.value.clear()
+    // Limpiar cache de feriados
+    holidaysCache.getAllKeys()
+      .filter(key => key.startsWith('holidays_'))
+      .forEach(key => holidaysCache.delete(key.replace('holidays_', '')))
   }
 
   /**
@@ -401,7 +405,7 @@ export function useDateCalculator(initialConfig = {}) {
       loadHolidays,
       checkExclusions,
       getNextValidDate,
-      holidaysCache: computed(() => holidaysCache.value)
+      holidaysCache: holidaysCache
     }
   }
 }

@@ -101,6 +101,7 @@
 import { ref, computed, watch } from 'vue'
 import { format, parseISO, isValid, isToday, isFuture, isPast } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { DateValidator } from '../utils/validation.js'
 
 // Props
 const props = defineProps({
@@ -218,50 +219,23 @@ const parsedDate = computed(() => {
   return parseISO(props.modelValue)
 })
 
-// Validación de reglas de fecha
+// Validación de reglas de fecha usando utilidad centralizada
 const dateValidationError = computed(() => {
-  if (!props.modelValue) {
-    return props.required ? 'La fecha es requerida' : ''
-  }
+  const result = DateValidator.validateDate(props.modelValue, {
+    required: props.required,
+    fieldName: props.label || 'fecha',
+    min: props.min,
+    max: props.max,
+    allowPast: props.allowPastDates,
+    allowFuture: props.allowFutureDates
+  })
 
-  if (!isValidDate.value) {
-    return 'Fecha inválida'
-  }
-
-  const date = parsedDate.value
-
-  // Validar fecha mínima
-  if (props.min && props.modelValue < props.min) {
-    return `La fecha debe ser posterior a ${formatDateForDisplay(props.min)}`
-  }
-
-  // Validar fecha máxima
-  if (props.max && props.modelValue > props.max) {
-    return `La fecha debe ser anterior a ${formatDateForDisplay(props.max)}`
-  }
-
-  // Validar fechas pasadas
-  if (!props.allowPastDates && isPast(date) && !isToday(date)) {
-    return 'No se permiten fechas pasadas'
-  }
-
-  // Validar fechas futuras
-  if (!props.allowFutureDates && isFuture(date)) {
-    return 'No se permiten fechas futuras'
-  }
-
-  return ''
+  return result.error
 })
 
 // Error combinado (externo + interno + validación)
 const hasError = computed(() => {
   return !!(props.errorMessage || internalError.value || (hasBeenTouched.value && dateValidationError.value))
-})
-
-const finalErrorMessage = computed(() => {
-  return props.errorMessage ||
-         internalError.value ||
-         (hasBeenTouched.value ? dateValidationError.value : '')
 })
 
 // Información formateada de la fecha
@@ -288,16 +262,6 @@ const formattedDateInfo = computed(() => {
     return 'Información de fecha no disponible'
   }
 })
-
-// Funciones auxiliares
-const formatDateForDisplay = (dateString) => {
-  try {
-    const date = parseISO(dateString)
-    return format(date, 'dd/MM/yyyy')
-  } catch {
-    return dateString
-  }
-}
 
 const validateDate = () => {
   internalError.value = ''

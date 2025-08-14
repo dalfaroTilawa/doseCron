@@ -300,7 +300,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
-import { format, parseISO, isValid } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 // Importar componentes
@@ -314,6 +314,7 @@ import { useSettings } from '../composables/useSettings.js'
 
 // Importar servicios
 import { getCountries } from '../services/holidayApi.js'
+import { DateValidator, ValidatorFactory } from '../utils/validation.js'
 
 const props = defineProps({
   // Configuración inicial opcional
@@ -351,7 +352,7 @@ const emit = defineEmits([
 ])
 
 // Composables
-const { settings, saveSetting, loadSetting, clearSettings } = useSettings()
+const { settings, saveSetting, loadSetting } = useSettings()
 const calculator = useDateCalculator()
 
 // Estado del formulario
@@ -409,74 +410,30 @@ const loadInitialConfig = () => {
 
 // Validaciones
 const validateStartDate = () => {
-  if (!formData.startDate) {
-    fieldErrors.startDate = 'La fecha inicial es requerida'
-    return false
-  }
+  const result = DateValidator.validateDate(formData.startDate, {
+    required: true,
+    fieldName: 'La fecha inicial',
+    allowPast: props.allowPastDates,
+    allowFuture: true
+  })
 
-  const date = parseISO(formData.startDate)
-  if (!isValid(date)) {
-    fieldErrors.startDate = 'Formato de fecha inválido'
-    return false
-  }
-
-  if (!props.allowPastDates && date < new Date()) {
-    fieldErrors.startDate = 'No se permiten fechas pasadas'
-    return false
-  }
-
-  fieldErrors.startDate = ''
-  return true
+  fieldErrors.startDate = result.error
+  return result.isValid
 }
 
-const validateInterval = () => {
-  if (!formData.interval || formData.interval === null || formData.interval === '') {
-    fieldErrors.interval = 'El intervalo es requerido'
-    return false
-  }
+const validateInterval = ValidatorFactory.createIntervalValidator()
 
-  if (formData.interval < 1) {
-    fieldErrors.interval = 'El intervalo debe ser mayor a 0'
-    return false
-  }
-
-  if (formData.interval > 365) {
-    fieldErrors.interval = 'El intervalo no puede ser mayor a 365 días'
-    return false
-  }
-
-  fieldErrors.interval = ''
-  return true
-}
-
-const validateDuration = () => {
-  if (!formData.duration || formData.duration === null || formData.duration === '') {
-    fieldErrors.duration = 'La duración es requerida'
-    return false
-  }
-
-  if (formData.duration < 1) {
-    fieldErrors.duration = 'La duración debe ser mayor a 0'
-    return false
-  }
-
-  if (formData.duration > 100) {
-    fieldErrors.duration = 'La duración no puede ser mayor a 100'
-    return false
-  }
-
-  fieldErrors.duration = ''
-  return true
-}
+const validateDuration = ValidatorFactory.createDurationValidator()
 
 const validateForm = () => {
-  const validations = [
-    validateStartDate(),
-    validateInterval(),
-    validateDuration()
-  ]
+  const startDateValid = validateStartDate()
+  const intervalResult = validateInterval(formData.interval)
+  const durationResult = validateDuration(formData.duration)
 
-  return validations.every(Boolean)
+  fieldErrors.interval = intervalResult.error
+  fieldErrors.duration = durationResult.error
+
+  return startDateValid && intervalResult.isValid && durationResult.isValid
 }
 
 // Computed properties
@@ -537,7 +494,7 @@ const configSummary = computed(() => {
 
 
 // Event handlers
-const onStartDateChange = (changeData) => {
+const onStartDateChange = () => {
   if (props.realtimeValidation) {
     validateStartDate()
   }
@@ -546,14 +503,16 @@ const onStartDateChange = (changeData) => {
 
 const onIntervalChange = () => {
   if (props.realtimeValidation) {
-    validateInterval()
+    const result = validateInterval(formData.interval)
+    fieldErrors.interval = result.error
   }
   emitConfigChange()
 }
 
 const onDurationChange = () => {
   if (props.realtimeValidation) {
-    validateDuration()
+    const result = validateDuration(formData.duration)
+    fieldErrors.duration = result.error
   }
   emitConfigChange()
 }

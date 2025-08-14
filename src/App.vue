@@ -272,14 +272,14 @@ const copyResults = async () => {
 
   try {
     // Formatear fechas para copiar
-    const text = calculationResults.value.map((dateInfo, index) => 
+    const text = calculationResults.value.map((dateInfo, index) =>
       `${index + 1}. ${dateInfo.formatted} (${dateInfo.dateString})`
     ).join('\n')
 
     await navigator.clipboard.writeText(text)
-    
+
     addNotification('success', '📋 Fechas copiadas al portapapeles')
-    
+
   } catch (error) {
     console.error('Error al copiar:', error)
     addNotification('error', '❌ Error al copiar al portapapeles')

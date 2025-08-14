@@ -5,6 +5,7 @@
 
 import { ref, reactive, computed, watch } from 'vue'
 import { STORAGE_KEYS, DEFAULT_USER_PREFERENCES, logger } from '../config/env.js'
+import { createStorageManager } from '../utils/storage.js'
 
 // Configuración por defecto desde variables de entorno
 const DEFAULT_SETTINGS = {
@@ -36,40 +37,8 @@ export function useSettings() {
   const isLoaded = ref(false)
   const error = ref('')
 
-  /**
-   * Verifica si localStorage está disponible
-   * @returns {boolean} Si localStorage es accesible
-   */
-  const isLocalStorageAvailable = () => {
-    try {
-      const test = '__dosecron_test__'
-      localStorage.setItem(test, test)
-      localStorage.removeItem(test)
-      return true
-    } catch (e) {
-      return false
-    }
-  }
-
-  /**
-   * Maneja errores de localStorage de forma segura
-   * @param {Function} operation - Operación a ejecutar
-   * @param {string} context - Contexto del error para logging
-   * @returns {any} Resultado de la operación o null en caso de error
-   */
-  const safeStorageOperation = (operation, context) => {
-    try {
-      if (!isLocalStorageAvailable()) {
-        logger.warn(`localStorage no disponible para: ${context}`)
-        return null
-      }
-      return operation()
-    } catch (err) {
-      logger.error(`Error en ${context}:`, err)
-      error.value = `Error de almacenamiento: ${err.message}`
-      return null
-    }
-  }
+  // Crear instancia del storage manager con logger personalizado
+  const storageManager = createStorageManager('useSettings')
 
   /**
    * Guarda el país seleccionado en localStorage
@@ -82,11 +51,11 @@ export function useSettings() {
       return false
     }
 
-    const result = safeStorageOperation(() => {
-      localStorage.setItem(STORAGE_KEYS.COUNTRY, country.toUpperCase())
+    const success = storageManager.setItem(STORAGE_KEYS.COUNTRY, country.toUpperCase())
+    if (success) {
       settings.country = country.toUpperCase()
-      return true
-    }, 'saveCountry')
+    }
+    const result = success
 
     return result || false
   }
@@ -96,14 +65,11 @@ export function useSettings() {
    * @returns {string|null} Código del país o null si no existe
    */
   const loadCountry = () => {
-    const result = safeStorageOperation(() => {
-      const stored = localStorage.getItem(STORAGE_KEYS.COUNTRY)
-      if (stored) {
-        settings.country = stored
-        return stored
-      }
-      return null
-    }, 'loadCountry')
+    const stored = storageManager.getItem(STORAGE_KEYS.COUNTRY)
+    if (stored) {
+      settings.country = stored
+    }
+    const result = stored
 
     return result
   }
@@ -114,17 +80,17 @@ export function useSettings() {
    * @returns {boolean} Éxito de la operación
    */
   const savePreferences = (preferences = {}) => {
-    const result = safeStorageOperation(() => {
-      const prefsToSave = {
-        ...settings,
-        ...preferences,
-        lastUpdated: new Date().toISOString()
-      }
+    const prefsToSave = {
+      ...settings,
+      ...preferences,
+      lastUpdated: new Date().toISOString()
+    }
 
-      localStorage.setItem(STORAGE_KEYS.USER_PREFERENCES, JSON.stringify(prefsToSave))
+    const success = storageManager.setItem(STORAGE_KEYS.USER_PREFERENCES, prefsToSave)
+    if (success) {
       Object.assign(settings, preferences)
-      return true
-    }, 'savePreferences')
+    }
+    const result = success
 
     return result || false
   }
@@ -134,15 +100,11 @@ export function useSettings() {
    * @returns {Object|null} Preferencias cargadas o null
    */
   const loadPreferences = () => {
-    const result = safeStorageOperation(() => {
-      const stored = localStorage.getItem(STORAGE_KEYS.USER_PREFERENCES)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        Object.assign(settings, { ...DEFAULT_SETTINGS, ...parsed })
-        return parsed
-      }
-      return null
-    }, 'loadPreferences')
+    const stored = storageManager.getItem(STORAGE_KEYS.USER_PREFERENCES)
+    if (stored) {
+      Object.assign(settings, { ...DEFAULT_SETTINGS, ...stored })
+    }
+    const result = stored
 
     return result
   }
@@ -159,20 +121,18 @@ export function useSettings() {
       return false
     }
 
-    const result = safeStorageOperation(() => {
-      // Actualizar configuración local
-      if (key in settings) {
-        settings[key] = value
-      }
+    // Actualizar configuración local
+    if (key in settings) {
+      settings[key] = value
+    }
 
-      // Guardar en localStorage específico si es una clave conocida
-      if (STORAGE_KEYS[key.toUpperCase()]) {
-        localStorage.setItem(STORAGE_KEYS[key.toUpperCase()], JSON.stringify(value))
-      }
+    // Guardar en localStorage específico si es una clave conocida
+    if (STORAGE_KEYS[key.toUpperCase()]) {
+      storageManager.setItem(STORAGE_KEYS[key.toUpperCase()], value)
+    }
 
-      // Siempre actualizar las preferencias generales
-      return savePreferences({ [key]: value })
-    }, `saveSetting(${key})`)
+    // Siempre actualizar las preferencias generales
+    const result = savePreferences({ [key]: value })
 
     return result || false
   }
@@ -184,28 +144,22 @@ export function useSettings() {
    * @returns {any} Valor cargado o valor por defecto
    */
   const loadSetting = (key, defaultValue = null) => {
-    const result = safeStorageOperation(() => {
-      // Intentar cargar desde localStorage específico
-      if (STORAGE_KEYS[key.toUpperCase()]) {
-        const stored = localStorage.getItem(STORAGE_KEYS[key.toUpperCase()])
-        if (stored) {
-          try {
-            return JSON.parse(stored)
-          } catch {
-            return stored // Si no es JSON, devolver como string
-          }
-        }
+    // Intentar cargar desde localStorage específico
+    if (STORAGE_KEYS[key.toUpperCase()]) {
+      const stored = storageManager.getItem(STORAGE_KEYS[key.toUpperCase()])
+      if (stored !== null) {
+        return stored
       }
+    }
 
-      // Intentar cargar desde preferencias generales
-      const prefs = loadPreferences()
-      if (prefs && key in prefs) {
-        return prefs[key]
-      }
+    // Intentar cargar desde preferencias generales
+    const prefs = loadPreferences()
+    if (prefs && key in prefs) {
+      return prefs[key]
+    }
 
-      // Usar valor por defecto
-      return defaultValue !== null ? defaultValue : DEFAULT_SETTINGS[key]
-    }, `loadSetting(${key})`)
+    // Usar valor por defecto
+    const result = defaultValue !== null ? defaultValue : DEFAULT_SETTINGS[key]
 
     return result !== null ? result : defaultValue
   }
@@ -215,17 +169,17 @@ export function useSettings() {
    * @returns {boolean} Éxito de la operación
    */
   const clearSettings = () => {
-    const result = safeStorageOperation(() => {
-      // Limpiar claves específicas
-      Object.values(STORAGE_KEYS).forEach(key => {
-        localStorage.removeItem(key)
-      })
+    // Limpiar claves específicas
+    let allSuccess = true
+    Object.values(STORAGE_KEYS).forEach(key => {
+      const success = storageManager.removeItem(key)
+      if (!success) allSuccess = false
+    })
 
-      // Resetear configuración local
-      Object.assign(settings, DEFAULT_SETTINGS)
+    // Resetear configuración local
+    Object.assign(settings, DEFAULT_SETTINGS)
 
-      return true
-    }, 'clearSettings')
+    const result = allSuccess
 
     return result || false
   }
