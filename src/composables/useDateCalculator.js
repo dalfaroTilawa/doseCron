@@ -92,11 +92,10 @@ export function useDateCalculator(initialConfig = {}) {
       case 'weeks':
         return addWeeks(start, config.duration)
       case 'months': {
-        // Para una duración de "1 mes", queremos que termine antes de cambiar de mes
-        // Por ejemplo: desde 13-ago por 1 mes = hasta antes del 13-sep
-        // Esto significa que la última fecha válida sería 12-sep, no 13-sep
-        const monthEnd = addMonths(start, config.duration)
-        return addDays(monthEnd, -1)  // Un día antes para ser más restrictivo
+        // Para una duración de "N meses", las fechas deben estar antes del mismo día N meses después
+        // Por ejemplo: desde 13-ago por 4 meses = hasta antes del 13-dic
+        // Esto significa que la última fecha válida sería 12-dic
+        return addMonths(start, config.duration)
       }
       case 'years':
         return addYears(start, config.duration)
@@ -207,6 +206,8 @@ export function useDateCalculator(initialConfig = {}) {
 
   /**
    * Función principal para calcular fechas recurrentes
+   * Usa cálculo matemático preciso: totalDías ÷ intervalo = numFechas (floor)
+   * El número de fechas es SIEMPRE el mismo, con/sin filtros
    * @returns {Promise<Array>} Array de objetos de fecha
    */
   const calculateDates = async () => {
@@ -229,30 +230,39 @@ export function useDateCalculator(initialConfig = {}) {
       // Calcular fecha final
       const endDate = calculateEndDate(startDate)
 
-      // Cargar feriados necesarios
+      // NUEVO ENFOQUE: Cálculo matemático preciso
+      // Calcular total de días en el período
+      const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+      
+      // Calcular número exacto de fechas usando división entera (redondeo hacia abajo)
+      // CORRECTO: Cada fecha representa un múltiplo del intervalo
+      // - Primera fecha: fecha inicial (representa día 15)
+      // - Segunda fecha: fecha inicial + 15 días (representa día 30)
+      // - Tercera fecha: fecha inicial + 30 días (representa día 45), etc.
+      // 122 días ÷ 15 intervalo = 8.1 → floor(8.1) = 8 fechas totales
+      const numberOfDates = Math.floor(totalDays / config.interval)
+      
+      // Validar que el número de fechas sea razonable
+      if (numberOfDates <= 0) {
+        calculatedDates.value = []
+        return []
+      }
+
+      // Cargar feriados necesarios para todo el período
       const holidaysMap = await loadHolidays(startDate, endDate)
 
       // Array para almacenar las fechas calculadas
       const dates = []
-      let currentDate = startOfDay(startDate)
-      let iterationCount = 0
-      const maxIterations = APP_CONFIG.MAX_ITERATIONS // Prevenir bucles infinitos
 
-      // Bucle principal de cálculo
-      while (iterationCount < maxIterations) {
-        // Verificar si currentDate está dentro del rango ANTES de procesarla
-        if (!isBefore(currentDate, endDate)) {
-          break
-        }
-
-        // Obtener el siguiente día válido si es necesario
-        const validDate = getNextValidDate(currentDate, holidaysMap)
-
-        // Segunda verificación: si la fecha válida está fuera del rango, romper
-        if (!isBefore(validDate, endDate)) {
-          break
-        }
-
+      // Generar exactamente numberOfDates fechas
+      for (let i = 0; i < numberOfDates; i++) {
+        // Calcular la fecha teórica (sin filtros) usando el intervalo
+        const theoreticalDate = addDays(startDate, i * config.interval)
+        
+        // Aplicar filtros si están habilitados para mover a día válido
+        // IMPORTANTE: Los filtros NO cambian el número de fechas, solo las mueven
+        const validDate = getNextValidDate(theoreticalDate, holidaysMap)
+        
         const exclusionInfo = checkExclusions(validDate, holidaysMap)
 
         // Crear objeto de fecha
@@ -266,19 +276,15 @@ export function useDateCalculator(initialConfig = {}) {
           isWeekend: exclusionInfo.isWeekend,
           isHoliday: exclusionInfo.isHoliday,
           holiday: exclusionInfo.holiday,
-          intervalNumber: dates.length + 1
+          intervalNumber: i + 1,
+          originalDate: theoreticalDate, // Mantener referencia a la fecha teórica original
+          wasFiltered: theoreticalDate.getTime() !== validDate.getTime() // Indicar si se aplicó filtro
         }
 
         dates.push(dateInfo)
-
-        // Calcular siguiente fecha según el intervalo
-        currentDate = addDays(validDate, config.interval)
-        iterationCount++
       }
 
-      if (iterationCount >= maxIterations) {
-        logger.warn(`Cálculo detenido: se alcanzó el máximo de ${APP_CONFIG.MAX_ITERATIONS} iteraciones`)
-      }
+      logger.info(`Cálculo matemático: ${totalDays} días ÷ ${config.interval} intervalo = ${numberOfDates} fechas (exacto)`)
 
       calculatedDates.value = dates
       return dates

@@ -3,6 +3,33 @@
    Sistema de diseño moderno y consistente
    ============================================ */
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Componentes personalizados para Tailwind */
+@layer components {
+  /* Botones primarios con gradientes temáticos */
+  .btn-primary-gradient {
+    @apply bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600;
+  }
+  
+  /* Botones primarios en modo oscuro con gradientes azules */
+  [data-theme="dark"] .btn-primary-gradient {
+    @apply bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600;
+  }
+  
+  /* Inputs con estilos temáticos */
+  .input-themed {
+    @apply transition-all duration-fast focus:outline-none focus:ring-3;
+  }
+  
+  /* Superficie con hover suave */
+  .surface-hover {
+    @apply transition-all duration-fast hover:shadow-md hover:-translate-y-0.5;
+  }
+}
+
 /* CSS Reset Moderno */
 *, *::before, *::after {
   box-sizing: border-box;

@@ -1,10 +1,10 @@
 <template>
-  <div id="app" :class="{ 'loading': globalLoading }">
+  <div id="app" :class="{ 'overflow-hidden': globalLoading }" class="min-h-screen bg-bg-primary text-text-primary transition-colors duration-300">
     <!-- Loading overlay global -->
-    <div v-if="globalLoading" class="loading-overlay">
-      <div class="loading-content">
-        <div class="loading-spinner" />
-        <p class="loading-text">
+    <div v-if="globalLoading" class="fixed inset-0 bg-bg-primary/90 backdrop-blur-sm z-modal-backdrop flex items-center justify-center">
+      <div class="text-center">
+        <div class="w-12 h-12 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin mx-auto mb-4" />
+        <p class="text-lg font-medium text-text-primary">
           {{ loadingMessage || 'Procesando...' }}
         </p>
       </div>
@@ -12,10 +12,10 @@
 
 
     <!-- Contenido principal -->
-    <main class="app-main">
-      <div class="main-container">
+    <main class="flex-1 py-8 px-4">
+      <div class="max-w-6xl mx-auto space-y-8">
         <!-- Formulario principal -->
-        <section class="form-section">
+        <section>
           <DateForm
             ref="mainFormRef"
             :allow-past-dates="true"
@@ -30,32 +30,32 @@
         </section>
 
         <!-- Sección de resultados -->
-        <section v-if="showResults" class="results-section">
-          <div class="results-header">
-            <h2 class="results-title">
-              <span class="results-icon">📊</span>
+        <section v-if="showResults" class="space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 bg-surface-primary border border-border-primary rounded-lg">
+            <h2 class="text-2xl font-bold text-text-primary flex items-center gap-3">
+              <span class="text-2xl">📊</span>
               Resultados del Cálculo
             </h2>
-            <div class="results-actions">
+            <div class="flex gap-3">
               <button
-                class="copy-btn"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-surface-secondary text-text-primary border border-border-primary rounded-base font-medium text-sm transition-all duration-fast hover:bg-surface-tertiary hover:border-border-secondary hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed surface-hover"
                 title="Copiar fechas al portapapeles"
                 :disabled="!showResults || calculationResults.length === 0"
                 @click="copyResults"
               >
-                📋 Copiar
+                <span>📋</span> Copiar
               </button>
               <button
-                class="clear-btn"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-error-100 text-error-700 border border-error-200 rounded-base font-medium text-sm transition-all duration-fast hover:bg-error-200 hover:border-error-300 hover:-translate-y-0.5 surface-hover"
                 title="Limpiar resultados"
                 @click="clearResults"
               >
-                🗑️ Limpiar
+                <span>🗑️</span> Limpiar
               </button>
             </div>
           </div>
 
-          <div class="results-content">
+          <div>
             <ResultsList
               :dates="calculationResults"
               :is-loading="isCalculating"
@@ -76,13 +76,13 @@
     </main>
 
     <!-- Footer -->
-    <footer class="app-footer">
-      <div class="footer-container">
-        <div class="footer-content">
-          <p class="footer-text">
-            © 2024 <strong>DoseCron</strong> - Calculadora de fechas recurrentes
+    <footer class="mt-auto py-6 px-4 bg-surface-secondary border-t border-border-primary">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center space-y-2">
+          <p class="text-sm text-text-primary font-medium">
+            © 2024 <strong class="font-bold">DoseCron</strong> - Calculadora de fechas recurrentes
           </p>
-          <p class="footer-meta">
+          <p class="text-xs text-text-muted">
             Desarrollado con Vue.js 3 y date-fns
           </p>
         </div>
@@ -90,16 +90,21 @@
     </footer>
 
     <!-- Notificaciones toast -->
-    <div v-if="notifications.length > 0" class="notifications-container">
+    <div v-if="notifications.length > 0" class="fixed top-4 right-4 z-toast space-y-3">
       <div
         v-for="notification in notifications"
         :key="notification.id"
-        :class="['notification', `notification-${notification.type}`]"
+        :class="['flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border max-w-sm animate-slideInRight', {
+          'bg-success-50 border-success-200 text-success-800': notification.type === 'success',
+          'bg-error-50 border-error-200 text-error-800': notification.type === 'error',
+          'bg-warning-50 border-warning-200 text-warning-800': notification.type === 'warning',
+          'bg-info-50 border-info-200 text-info-800': notification.type === 'info'
+        }]"
       >
-        <span class="notification-icon">{{ getNotificationIcon(notification.type) }}</span>
-        <span class="notification-message">{{ notification.message }}</span>
+        <span class="text-lg flex-shrink-0">{{ getNotificationIcon(notification.type) }}</span>
+        <span class="text-sm font-medium flex-1">{{ notification.message }}</span>
         <button
-          class="notification-close"
+          class="text-current hover:opacity-70 font-bold text-lg leading-none p-1 transition-opacity"
           @click="removeNotification(notification.id)"
         >
           ✕
@@ -108,11 +113,11 @@
     </div>
 
     <!-- Error global -->
-    <div v-if="globalError" class="error-banner">
-      <div class="error-content">
-        <span class="error-icon">⚠️</span>
-        <span class="error-message">{{ globalError }}</span>
-        <button class="error-close" @click="clearGlobalError">
+    <div v-if="globalError" class="fixed top-4 left-1/2 -translate-x-1/2 z-toast max-w-md">
+      <div class="flex items-center gap-3 p-4 bg-error-50 border border-error-200 text-error-800 rounded-lg shadow-lg animate-slideInDown">
+        <span class="text-lg flex-shrink-0">⚠️</span>
+        <span class="text-sm font-medium flex-1">{{ globalError }}</span>
+        <button class="text-error-600 hover:text-error-700 font-bold text-lg leading-none p-1 transition-colors" @click="clearGlobalError">
           ✕
         </button>
       </div>
@@ -317,370 +322,34 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Usar variables del sistema de estilos global */
-
-/* Reset base */
-* {
-  box-sizing: border-box;
+/* Animaciones personalizadas para notificaciones */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-#app {
-  min-height: 100vh;
-  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-gray-50) 100%);
-  color: var(--color-text-primary);
-  font-family: var(--font-family-base);
-  line-height: var(--line-height-base);
-  transition: all var(--transition-base);
-  padding: var(--space-8) var(--space-4);
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
-
-/* Loading overlay */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
-}
-
-[data-theme="dark"] .loading-overlay {
-  background: rgba(15, 23, 42, 0.9);
-}
-
-.loading-content {
-  text-align: center;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--color-border-primary);
-  border-top: 3px solid var(--color-primary-500);
-  border-radius: var(--radius-full);
-  animation: spin 1s linear infinite;
-  margin: 0 auto var(--space-4);
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-text {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
-}
-
-
-/* Main content */
-.app-main {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.main-container {
-  display: grid;
-  gap: 2rem;
-  width: 100%;
-}
-
-/* Secciones - Estilo moderno */
-.form-section,
-.results-section {
-  background: var(--color-surface-primary);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  border: 1px solid var(--color-border-primary);
-  overflow: hidden;
-  backdrop-filter: blur(10px);
-}
-
-.results-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2rem 2rem 1rem 2rem;
-  background: transparent;
-}
-
-.results-title {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--color-text-primary);
-  letter-spacing: -0.025em;
-}
-
-.results-icon {
-  font-size: 1.5rem;
-}
-
-.results-actions {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.clear-btn {
-  background: transparent;
-  border: 1px solid var(--color-border-primary);
-  border-radius: var(--radius-md);
-  padding: 0.75rem 1.25rem;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.875rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.clear-btn:hover {
-  background: var(--color-error);
-  color: white;
-  border-color: var(--color-error);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-lg);
-}
-
-.copy-btn {
-  background: transparent;
-  border: 1px solid var(--color-border-primary);
-  border-radius: var(--radius-md);
-  padding: 0.75rem 1.25rem;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.875rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.copy-btn:hover:not(:disabled) {
-  background: var(--color-primary-500);
-  color: white;
-  border-color: var(--color-primary-500);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-lg);
-}
-
-.copy-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.results-content {
-  padding: 0;
-  width: 100%;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-/* Footer */
-.app-footer {
-  text-align: center;
-  padding: 3rem 0 2rem 0;
-  margin-top: 4rem;
-}
-
-.footer-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
-
-.footer-content {
-  text-align: center;
-}
-
-.footer-text {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-.footer-meta {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  font-weight: 400;
-}
-
-/* Notificaciones - Estilo moderno */
-.notifications-container {
-  position: fixed;
-  top: 2rem;
-  right: 2rem;
-  z-index: 1100;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  max-width: 420px;
-}
-
-.notification {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.25rem 1.5rem;
-  background: var(--color-surface-primary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
-  border: 1px solid var(--color-border-light);
-  backdrop-filter: blur(10px);
+.animate-slideInRight {
   animation: slideInRight 0.3s ease-out;
 }
 
-.notification-success { border-left-color: var(--color-success); }
-.notification-error { border-left-color: var(--color-error); }
-.notification-warning { border-left-color: var(--color-warning); }
-.notification-info { border-left-color: var(--color-info); }
-
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(100%); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-.notification-icon {
-  font-size: 1.2rem;
-  flex-shrink: 0;
-}
-
-.notification-message {
-  flex: 1;
-  font-size: 0.9rem;
-  color: var(--color-text-primary);
-}
-
-.notification-close {
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0.25rem;
-  border-radius: var(--radius-sm);
-  transition: all 0.3s ease;
-}
-
-.notification-close:hover {
-  background: var(--color-surface-secondary);
-  color: var(--color-text-primary);
-}
-
-/* Error global */
-.error-banner {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--color-error);
-  color: white;
-  padding: 1rem;
-  box-shadow: var(--shadow-lg);
-  z-index: 1000;
-  animation: slideInUp 0.3s ease-out;
-}
-
-@keyframes slideInUp {
-  from { opacity: 0; transform: translateY(100%); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.error-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.error-icon {
-  font-size: 1.2rem;
-  flex-shrink: 0;
-}
-
-.error-message {
-  flex: 1;
-  font-size: 0.9rem;
-}
-
-.error-close {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  cursor: pointer;
-  font-size: 1.2rem;
-  padding: 0.5rem;
-  border-radius: var(--radius-sm);
-  transition: all 0.3s ease;
-}
-
-.error-close:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  #app {
-    padding: 1rem 0.5rem;
-  }
-
-  .main-container {
-    gap: 1.5rem;
-  }
-
-  .form-section,
-  .results-section {
-    border-radius: var(--radius-lg);
-  }
-
-  .results-header {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-    text-align: center;
-  }
-
-  .footer-container {
-    padding: 0 1rem;
-  }
-
-  .notifications-container {
-    left: 1rem;
-    right: 1rem;
-    max-width: none;
-  }
-
-  .error-content {
-    flex-direction: column;
-    gap: 0.5rem;
-    text-align: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .main-container,
-  .footer-container {
-    padding: 0 1rem;
-  }
+.animate-slideInDown {
+  animation: slideInDown 0.3s ease-out;
 }
 </style>

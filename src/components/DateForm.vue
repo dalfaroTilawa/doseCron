@@ -1,26 +1,26 @@
 <template>
-  <div class="date-form">
+  <div class="bg-surface-primary border border-border-primary rounded-lg shadow-sm overflow-hidden transition-shadow duration-fast hover:shadow-md">
     <!-- Header del formulario -->
-    <div class="form-header">
-      <h2 class="form-title">
-        <span class="form-icon">📅</span>
+    <div class="p-6 border-b border-border-primary bg-bg-secondary">
+      <h2 class="text-2xl font-extrabold text-text-primary mb-3 flex items-center gap-3">
+        <span class="text-3xl">📅</span>
         Calculadora de Fechas Recurrentes
       </h2>
-      <p class="form-description">
+      <p class="text-base text-text-secondary leading-relaxed">
         Genera una lista de fechas recurrentes con exclusión inteligente de fines de semana y feriados
       </p>
     </div>
 
     <!-- Formulario principal -->
-    <form class="calculation-form" novalidate @submit.prevent="handleSubmit">
+    <form class="p-6 space-y-8" novalidate @submit.prevent="handleSubmit">
       <!-- Sección: Configuración Básica -->
-      <div class="form-section">
-        <h3 class="section-title">
-          <span class="section-icon">⚙️</span>
+      <div class="space-y-6">
+        <h3 class="text-xl font-bold text-text-primary flex items-center gap-3 mb-6">
+          <span class="text-lg">⚙️</span>
           Configuración Básica
         </h3>
 
-        <div class="form-grid">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Fecha inicial -->
           <div class="form-field">
             <DatePicker
@@ -39,12 +39,12 @@
           </div>
 
           <!-- Intervalo -->
-          <div class="form-field">
-            <label for="interval" class="field-label">
+          <div class="space-y-3">
+            <label for="interval" class="block text-sm font-semibold text-text-primary mb-2">
               Intervalo (días) *
-              <span class="required-indicator">*</span>
+              <span class="text-error-500">*</span>
             </label>
-            <div class="input-wrapper">
+            <div class="relative">
               <input
                 id="interval"
                 v-model.number="formData.interval"
@@ -52,7 +52,7 @@
                 min="1"
                 max="365"
                 step="1"
-                :class="['form-input', { 'has-error': fieldErrors.interval }]"
+                :class="['w-full pr-20 py-3 px-4 border rounded-base bg-surface-primary text-text-primary placeholder-text-placeholder transition-all duration-fast focus:outline-none focus:ring-3 focus:ring-primary-500/10 focus:border-border-focus', { 'border-error-500': fieldErrors.interval, 'border-border-primary': !fieldErrors.interval }]"
                 :aria-invalid="!!fieldErrors.interval"
                 :aria-describedby="fieldErrors.interval ? 'interval-error' : 'interval-help'"
                 placeholder="Ej: 15"
@@ -60,29 +60,29 @@
                 @input="onIntervalChange"
                 @blur="validateInterval"
               >
-              <span class="input-suffix">días</span>
+              <span class="absolute right-12 top-1/2 -translate-y-1/2 text-sm text-text-muted font-medium pointer-events-none">días</span>
             </div>
             <div
               v-if="fieldErrors.interval"
               id="interval-error"
-              class="error-message"
+              class="text-sm text-error-600 mt-2 flex items-center gap-2"
               role="alert"
             >
               {{ fieldErrors.interval }}
             </div>
-            <div v-else id="interval-help" class="help-text">
+            <div v-else id="interval-help" class="text-sm text-text-muted mt-2 font-medium">
               Número de días entre cada fecha generada (1-365)
             </div>
           </div>
 
           <!-- Duración -->
-          <div class="form-field">
-            <label for="duration" class="field-label">
+          <div class="space-y-3">
+            <label for="duration" class="block text-sm font-semibold text-text-primary mb-2">
               Duración *
-              <span class="required-indicator">*</span>
+              <span class="text-error-500">*</span>
             </label>
-            <div class="duration-inputs">
-              <div class="input-wrapper">
+            <div class="flex gap-3">
+              <div class="flex-1">
                 <input
                   id="duration"
                   v-model.number="formData.duration"
@@ -90,7 +90,7 @@
                   min="1"
                   max="100"
                   step="1"
-                  :class="['form-input', { 'has-error': fieldErrors.duration }]"
+                  :class="['w-full py-3 px-4 border rounded-base bg-surface-primary text-text-primary placeholder-text-placeholder transition-all duration-fast focus:outline-none focus:ring-3 focus:ring-primary-500/10 focus:border-border-focus', { 'border-error-500': fieldErrors.duration, 'border-border-primary': !fieldErrors.duration }]"
                   :aria-invalid="!!fieldErrors.duration"
                   placeholder="Ej: 4"
                   required
@@ -100,7 +100,7 @@
               </div>
               <select
                 v-model="formData.durationUnit"
-                :class="['form-select', { 'has-error': fieldErrors.durationUnit }]"
+                :class="['py-3 px-4 border rounded-base bg-surface-primary text-text-primary transition-all duration-fast focus:outline-none focus:ring-3 focus:ring-primary-500/10 focus:border-border-focus cursor-pointer', { 'border-error-500': fieldErrors.durationUnit, 'border-border-primary': !fieldErrors.durationUnit }]"
                 @change="onDurationUnitChange"
               >
                 <option value="days">
@@ -117,34 +117,47 @@
                 </option>
               </select>
             </div>
-            <div v-if="fieldErrors.duration || fieldErrors.durationUnit" class="error-message" role="alert">
+            <div v-if="fieldErrors.duration || fieldErrors.durationUnit" class="text-sm text-error-600 mt-2 flex items-center gap-2" role="alert">
               {{ fieldErrors.duration || fieldErrors.durationUnit }}
             </div>
-            <div v-else class="help-text">
+            <div v-else class="text-sm text-text-muted mt-2 font-medium">
               Período total durante el cual generar fechas
             </div>
           </div>
 
+          <!-- Mensaje de validación intervalo vs duración -->
+          <div v-if="fieldErrors.intervalVsDuration" class="md:col-span-2">
+            <div class="bg-error-50 border border-error-200 rounded-lg p-4 flex items-start gap-3">
+              <span class="text-lg flex-shrink-0 mt-0.5">⚠️</span>
+              <div>
+                <p class="text-error-700 font-medium">{{ fieldErrors.intervalVsDuration }}</p>
+                <p class="text-error-600 text-sm mt-2">
+                  Sugerencia: Reduce el intervalo o aumenta la duración para generar fechas recurrentes.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <!-- Opciones de exclusión (colapsables) -->
-          <div class="form-field full-width">
-            <div class="collapsible-section">
+          <div class="md:col-span-2 space-y-3">
+            <div class="bg-surface-secondary border border-border-light rounded-lg p-4">
               <button
                 type="button"
-                class="collapsible-toggle"
+                class="w-full flex items-center justify-between py-2 px-3 text-left bg-transparent border-0 cursor-pointer transition-all duration-fast hover:bg-surface-hover rounded-base"
                 :aria-expanded="showExclusionOptions"
                 @click="showExclusionOptions = !showExclusionOptions"
               >
-                <div class="toggle-content">
-                  <span class="toggle-icon">{{ showExclusionOptions ? '🔽' : '▶️' }}</span>
-                  <span class="toggle-text">Opciones de exclusión</span>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm transition-transform duration-200" :class="{'rotate-90': showExclusionOptions}">{{ showExclusionOptions ? '🔽' : '▶️' }}</span>
+                  <span class="font-semibold text-text-primary text-base">Opciones de exclusión</span>
                 </div>
-                <span class="toggle-hint">(fines de semana y feriados)</span>
+                <span class="text-sm text-text-muted font-medium">(fines de semana y feriados)</span>
               </button>
 
-              <div v-show="showExclusionOptions" class="collapsible-content">
-                <div class="exclusion-options">
+              <div v-show="showExclusionOptions" class="mt-4 animate-slideDown">
+                <div class="flex flex-col gap-6">
                   <!-- Selector de país -->
-                  <div class="exclusion-field">
+                  <div class="w-full">
                     <CountrySelector
                       v-model="formData.country"
                       label="País para feriados"
@@ -160,7 +173,7 @@
                   </div>
 
                   <!-- Filtros de exclusión -->
-                  <div class="exclusion-field">
+                  <div class="w-full">
                     <FilterOptions
                       v-model:exclude-weekends="formData.excludeWeekends"
                       v-model:exclude-holidays="formData.excludeHolidays"
@@ -180,44 +193,44 @@
           </div>
 
           <!-- Selector de tema (colapsable) -->
-          <div class="form-field full-width">
-            <div class="collapsible-section">
+          <div class="md:col-span-2 space-y-3">
+            <div class="bg-surface-secondary border border-border-light rounded-lg p-4">
               <button
                 type="button"
-                class="collapsible-toggle"
+                class="w-full flex items-center justify-between py-2 px-3 text-left bg-transparent border-0 cursor-pointer transition-all duration-fast hover:bg-surface-hover rounded-base"
                 :aria-expanded="showThemeOptions"
                 @click="showThemeOptions = !showThemeOptions"
               >
-                <div class="toggle-content">
-                  <span class="toggle-icon">{{ showThemeOptions ? '🔽' : '▶️' }}</span>
-                  <span class="toggle-text">Tema de la aplicación</span>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm transition-transform duration-200" :class="{'rotate-90': showThemeOptions}">{{ showThemeOptions ? '🔽' : '▶️' }}</span>
+                  <span class="font-semibold text-text-primary text-base">Tema de la aplicación</span>
                 </div>
-                <span class="toggle-hint">({{ isDarkMode ? 'oscuro' : 'claro' }})</span>
+                <span class="text-sm text-text-muted font-medium">({{ isDarkMode ? 'oscuro' : 'claro' }})</span>
               </button>
 
-              <div v-show="showThemeOptions" class="collapsible-content">
-                <div class="theme-selector">
-                  <div class="theme-options">
+              <div v-show="showThemeOptions" class="mt-4 animate-slideDown">
+                <div class="flex flex-col gap-4">
+                  <div class="flex gap-2">
                     <button
                       type="button"
-                      :class="['theme-option', { active: !isDarkMode }]"
+                      :class="['flex items-center gap-2 py-3 px-4 bg-surface-secondary border border-border-primary rounded-lg cursor-pointer transition-all duration-200 hover:bg-surface-tertiary hover:border-border-secondary hover:-translate-y-0.5 text-sm text-text-primary font-medium', { 'bg-primary-500 border-primary-500 text-white -translate-y-0.5 shadow-primary-200': !isDarkMode }]"
                       title="Modo claro"
                       @click="setTheme('light')"
                     >
-                      <span class="theme-option-icon">☀️</span>
-                      <span class="theme-option-text">Claro</span>
+                      <span class="text-lg leading-none">☀️</span>
+                      <span>Claro</span>
                     </button>
                     <button
                       type="button"
-                      :class="['theme-option', { active: isDarkMode }]"
+                      :class="['flex items-center gap-2 py-3 px-4 bg-surface-secondary border border-border-primary rounded-lg cursor-pointer transition-all duration-200 hover:bg-surface-tertiary hover:border-border-secondary hover:-translate-y-0.5 text-sm text-text-primary font-medium', { 'bg-primary-500 border-primary-500 text-white -translate-y-0.5 shadow-primary-200': isDarkMode }]"
                       title="Modo oscuro"
                       @click="setTheme('dark')"
                     >
-                      <span class="theme-option-icon">🌙</span>
-                      <span class="theme-option-text">Oscuro</span>
+                      <span class="text-lg leading-none">🌙</span>
+                      <span>Oscuro</span>
                     </button>
                   </div>
-                  <div class="help-text">
+                  <div class="text-sm text-text-muted mt-2 font-medium">
                     Selecciona el tema visual de la aplicación
                   </div>
                 </div>
@@ -229,23 +242,23 @@
 
 
       <!-- Advertencias y validaciones -->
-      <div v-if="formWarnings.length > 0" class="form-warnings">
-        <div v-for="warning in formWarnings" :key="warning.type" class="warning-item">
-          <span class="warning-icon">⚠️</span>
-          <span class="warning-text">{{ warning.message }}</span>
+      <div v-if="formWarnings.length > 0" class="space-y-3">
+        <div v-for="warning in formWarnings" :key="warning.type" class="flex items-center gap-3 p-4 bg-warning-50 border border-warning-200 rounded-lg">
+          <span class="text-lg flex-shrink-0">⚠️</span>
+          <span class="text-warning-700 font-medium">{{ warning.message }}</span>
         </div>
       </div>
 
       <!-- Botones de acción -->
-      <div class="form-actions">
+      <div class="flex flex-col sm:flex-row gap-4 pt-4">
         <button
           type="submit"
           :disabled="isCalculating || !isFormValid"
-          :class="['btn', 'btn-primary', 'btn-calculate', { 'loading': isCalculating }]"
+          :class="['inline-flex items-center justify-center gap-3 px-6 py-3 font-medium text-base text-white rounded-base transition-all duration-fast min-h-[44px] flex-1 sm:flex-none focus:outline-none focus:ring-3 focus:ring-primary-500/20', isCalculating ? 'bg-primary-400 cursor-not-allowed' : 'bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 hover:shadow-md hover:-translate-y-0.5 shadow-sm']"
         >
-          <span v-if="isCalculating" class="btn-spinner" />
-          <span class="btn-icon">{{ isCalculating ? '⏳' : '🔄' }}</span>
-          <span class="btn-text">
+          <span v-if="isCalculating" class="animate-spin text-lg">⏳</span>
+          <span v-else class="text-lg">{{ isCalculating ? '⏳' : '🔄' }}</span>
+          <span>
             {{ isCalculating ? 'Calculando...' : 'Calcular Fechas' }}
           </span>
         </button>
@@ -253,34 +266,34 @@
         <button
           type="button"
           :disabled="isCalculating"
-          class="btn btn-secondary"
+          class="inline-flex items-center justify-center gap-3 px-6 py-3 font-medium text-base bg-surface-primary text-text-secondary border border-border-primary rounded-base transition-all duration-fast min-h-[44px] hover:bg-surface-hover hover:border-border-secondary hover:-translate-y-0.5 focus:outline-none focus:ring-3 focus:ring-border-focus/20 disabled:opacity-60 disabled:cursor-not-allowed"
           @click="resetForm"
         >
-          <span class="btn-icon">🗑️</span>
-          <span class="btn-text">Resetear</span>
+          <span class="text-lg">🗑️</span>
+          <span>Resetear</span>
         </button>
       </div>
 
       <!-- Resumen de configuración -->
-      <div v-if="configSummary" class="config-summary">
-        <h4 class="summary-title">
-          📋 Resumen de configuración:
+      <div v-if="configSummary" class="bg-surface-primary border border-border-primary rounded-lg p-6 shadow-sm">
+        <h4 class="text-lg font-bold text-primary-600 mb-4 flex items-center gap-2">
+          <span>📋</span> Resumen de configuración:
         </h4>
-        <div class="summary-content">
-          <div class="summary-item">
-            <strong>Inicio:</strong> {{ configSummary.startDate }}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="text-sm">
+            <span class="font-semibold text-text-primary">Inicio:</span> <span class="text-text-secondary font-medium">{{ configSummary.startDate }}</span>
           </div>
-          <div class="summary-item">
-            <strong>Intervalo:</strong> {{ configSummary.interval }}
+          <div class="text-sm">
+            <span class="font-semibold text-text-primary">Intervalo:</span> <span class="text-text-secondary font-medium">{{ configSummary.interval }}</span>
           </div>
-          <div class="summary-item">
-            <strong>Duración:</strong> {{ configSummary.duration }}
+          <div class="text-sm">
+            <span class="font-semibold text-text-primary">Duración:</span> <span class="text-text-secondary font-medium">{{ configSummary.duration }}</span>
           </div>
-          <div class="summary-item">
-            <strong>País:</strong> {{ configSummary.country }}
+          <div class="text-sm">
+            <span class="font-semibold text-text-primary">País:</span> <span class="text-text-secondary font-medium">{{ configSummary.country }}</span>
           </div>
-          <div class="summary-item">
-            <strong>Exclusiones:</strong> {{ configSummary.exclusions }}
+          <div class="text-sm">
+            <span class="font-semibold text-text-primary">Exclusiones:</span> <span class="text-text-secondary font-medium">{{ configSummary.exclusions }}</span>
           </div>
         </div>
       </div>
@@ -288,10 +301,10 @@
 
 
     <!-- Mensajes de error global -->
-    <div v-if="globalError" class="global-error">
-      <span class="error-icon">❌</span>
-      <span class="error-text">{{ globalError }}</span>
-      <button class="error-dismiss" @click="clearGlobalError">
+    <div v-if="globalError" class="flex items-center gap-3 p-4 bg-error-50 border border-error-200 rounded-lg mt-4">
+      <span class="text-lg flex-shrink-0">❌</span>
+      <span class="text-error-700 font-medium flex-1">{{ globalError }}</span>
+      <button class="text-error-600 hover:text-error-700 font-bold text-lg leading-none p-1" @click="clearGlobalError">
         ✕
       </button>
     </div>
@@ -314,7 +327,7 @@ import { useSettings } from '../composables/useSettings.js'
 
 // Importar servicios
 import { getCountries } from '../services/holidayApi.js'
-import { DateValidator, ValidatorFactory } from '../utils/validation.js'
+import { DateValidator, ValidatorFactory, DurationValidator } from '../utils/validation.js'
 
 const props = defineProps({
   // Configuración inicial opcional
@@ -372,7 +385,8 @@ const fieldErrors = reactive({
   interval: '',
   duration: '',
   durationUnit: '',
-  country: ''
+  country: '',
+  intervalVsDuration: '' // Nueva validación
 })
 
 const isCalculating = ref(false)
@@ -425,15 +439,27 @@ const validateInterval = ValidatorFactory.createIntervalValidator()
 
 const validateDuration = ValidatorFactory.createDurationValidator()
 
+const validateIntervalVsDuration = () => {
+  const result = DurationValidator.validateIntervalVsDuration(
+    formData.interval,
+    formData.duration,
+    formData.durationUnit
+  )
+  
+  fieldErrors.intervalVsDuration = result.error
+  return result.isValid
+}
+
 const validateForm = () => {
   const startDateValid = validateStartDate()
   const intervalResult = validateInterval(formData.interval)
   const durationResult = validateDuration(formData.duration)
+  const intervalDurationValid = validateIntervalVsDuration()
 
   fieldErrors.interval = intervalResult.error
   fieldErrors.duration = durationResult.error
 
-  return startDateValid && intervalResult.isValid && durationResult.isValid
+  return startDateValid && intervalResult.isValid && durationResult.isValid && intervalDurationValid
 }
 
 // Computed properties
@@ -505,6 +531,8 @@ const onIntervalChange = () => {
   if (props.realtimeValidation) {
     const result = validateInterval(formData.interval)
     fieldErrors.interval = result.error
+    // También validar intervalo vs duración
+    validateIntervalVsDuration()
   }
   emitConfigChange()
 }
@@ -513,11 +541,17 @@ const onDurationChange = () => {
   if (props.realtimeValidation) {
     const result = validateDuration(formData.duration)
     fieldErrors.duration = result.error
+    // También validar intervalo vs duración
+    validateIntervalVsDuration()
   }
   emitConfigChange()
 }
 
 const onDurationUnitChange = () => {
+  if (props.realtimeValidation) {
+    // Validar intervalo vs duración cuando cambia la unidad
+    validateIntervalVsDuration()
+  }
   emitConfigChange()
 }
 
@@ -704,507 +738,7 @@ defineExpose({
 </script>
 
 <style scoped>
-.date-form {
-  width: 100%;
-  background: transparent;
-  padding: 2rem;
-}
-
-/* Header */
-.form-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 2px solid var(--color-border-primary);
-}
-
-.form-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.form-icon {
-  font-size: 2rem;
-}
-
-.form-description {
-  margin: 0;
-  font-size: 1rem;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-/* Form sections - Estilo moderno */
-.form-section {
-  margin-bottom: 2.5rem;
-  padding: 0;
-}
-
-.section-title {
-  margin: 0 0 2rem 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  letter-spacing: -0.025em;
-}
-
-.section-icon {
-  font-size: 1.5rem;
-}
-
-/* Form grid */
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-field.full-width {
-  grid-column: 1 / -1;
-}
-
-/* Form inputs */
-.field-label {
-  font-weight: 600;
-  color: var(--color-text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.9rem;
-}
-
-.required-indicator {
-  color: var(--color-error);
-  font-weight: bold;
-}
-
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 2px solid var(--color-border-primary);
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  background-color: var(--color-surface-primary);
-  color: var(--color-text-primary);
-}
-
-/* Estilos específicos para inputs numéricos */
-.form-input[type="number"] {
-  padding-right: 3rem; /* Espacio extra para los spinners */
-}
-
-/* Ocultar spinners nativos en navegadores WebKit (Chrome, Safari, Edge) */
-.form-input[type="number"]::-webkit-outer-spin-button,
-.form-input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-/* Ocultar spinners en Firefox */
-.form-input[type="number"] {
-  -moz-appearance: textfield;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 3px var(--color-primary-100);
-}
-
-.form-input.has-error {
-  border-color: var(--color-error);
-}
-
-.input-suffix {
-  position: absolute;
-  right: 0.75rem;
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-  font-weight: 500;
-  pointer-events: none;
-}
-
-.form-select {
-  padding: 0.75rem;
-  border: 2px solid var(--color-border-primary);
-  border-radius: 8px;
-  font-size: 1rem;
-  background-color: var(--color-surface-primary);
-  color: var(--color-text-primary);
-  cursor: pointer;
-  transition: border-color 0.3s ease;
-  min-width: 120px;
-}
-
-.form-select:focus {
-  outline: none;
-  border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 3px var(--color-primary-100);
-}
-
-.duration-inputs {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.duration-inputs .input-wrapper {
-  flex: 1;
-}
-
-/* Messages */
-.error-message {
-  color: var(--color-error);
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-}
-
-.help-text {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-  line-height: 1.4;
-}
-
-/* Warnings */
-.form-warnings {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background-color: var(--color-warning-light);
-  border-radius: 8px;
-  border-left: 4px solid var(--color-warning);
-}
-
-.warning-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--color-warning-dark);
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-}
-
-.warning-item:last-child {
-  margin-bottom: 0;
-}
-
-.warning-icon {
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
-
-/* Buttons */
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 2rem;
-}
-
-.btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-400) 100%);
-  color: white;
-  box-shadow: 0 4px 12px var(--color-primary-200);
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px var(--color-primary-300);
-}
-
-.btn-secondary {
-  background-color: var(--color-surface-secondary);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border-primary);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background-color: var(--color-surface-tertiary);
-  transform: translateY(-1px);
-}
-
-.btn-calculate {
-  min-width: 180px;
-}
-
-.btn-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.btn-icon {
-  font-size: 1.1rem;
-  line-height: 1;
-}
-
-.btn-text {
-  white-space: nowrap;
-}
-
-/* Config summary */
-.config-summary {
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background-color: var(--color-primary-50);
-  border-radius: 12px;
-  border: 1px solid var(--color-primary-200);
-}
-
-.summary-title {
-  margin: 0 0 1rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--color-primary-500);
-}
-
-.summary-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.75rem;
-}
-
-.summary-item {
-  font-size: 0.9rem;
-  color: var(--color-text-primary);
-  line-height: 1.4;
-}
-
-
-/* Global error */
-.global-error {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  background-color: var(--color-error-light);
-  color: var(--color-error-dark);
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--color-error);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  max-width: 400px;
-  z-index: 1000;
-  animation: slideInRight 0.3s ease-out;
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.error-icon {
-  font-size: 1.2rem;
-  flex-shrink: 0;
-}
-
-.error-text {
-  flex: 1;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-.error-dismiss {
-  background: none;
-  border: none;
-  color: var(--color-error-dark);
-  cursor: pointer;
-  font-size: 1.1rem;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.error-dismiss:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .date-form {
-    padding: 1rem;
-    margin: 1rem;
-    border-radius: 12px;
-  }
-
-  .form-header {
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-  }
-
-  .form-title {
-    font-size: 1.5rem;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .form-section {
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .form-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .btn {
-    justify-content: center;
-  }
-
-  .duration-inputs {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .summary-content {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-
-  .global-error {
-    position: static;
-    margin-bottom: 1rem;
-  }
-}
-
-/* Dark mode is handled by CSS variables */
-
-/* Collapsible sections */
-.collapsible-section {
-  display: flex;
-  flex-direction: column;
-}
-
-.collapsible-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 1rem;
-  color: var(--color-text-primary);
-  text-align: left;
-  width: 100%;
-  border-radius: 4px;
-}
-
-.collapsible-toggle:hover .toggle-text {
-  color: var(--color-primary-400);
-}
-
-.collapsible-toggle:hover .toggle-icon {
-  color: var(--color-primary-400);
-}
-
-.collapsible-toggle:focus {
-  outline: none;
-}
-
-.toggle-content {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: color 0.2s ease;
-}
-
-.toggle-icon {
-  font-size: 0.875rem;
-  line-height: 1;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-  color: var(--color-text-muted);
-}
-
-.toggle-text {
-  font-weight: 600;
-  color: var(--color-text-primary);
-  font-size: 1rem;
-}
-
-.toggle-hint {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  font-weight: 400;
-  margin-left: auto;
-}
-
-.collapsible-content {
-  margin-top: 1rem;
-  animation: slideDown 0.3s ease-out;
-}
-
+/* Animación para contenido colapsable */
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -1216,66 +750,18 @@ defineExpose({
   }
 }
 
-.exclusion-options {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out;
 }
 
-.exclusion-field {
-  width: 100%;
+/* Ocultar spinners nativos en inputs numéricos */
+.form-input[type="number"]::-webkit-outer-spin-button,
+.form-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-/* Theme selector */
-.theme-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.theme-icon {
-  margin-right: 0.5rem;
-}
-
-.theme-options {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.theme-option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background-color: var(--color-surface-secondary);
-  border: 1px solid var(--color-border-primary);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-  color: var(--color-text-primary);
-}
-
-.theme-option:hover {
-  background-color: var(--color-surface-tertiary);
-  border-color: var(--color-border-secondary);
-  transform: translateY(-1px);
-}
-
-.theme-option.active {
-  background-color: var(--color-primary-500);
-  border-color: var(--color-primary-500);
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px var(--color-primary-200);
-}
-
-.theme-option-icon {
-  font-size: 1.1rem;
-  line-height: 1;
-}
-
-.theme-option-text {
-  font-weight: 500;
+.form-input[type="number"] {
+  -moz-appearance: textfield;
 }
 </style>
