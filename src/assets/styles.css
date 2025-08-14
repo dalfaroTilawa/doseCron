@@ -503,6 +503,36 @@ body {
   color: #cbd5e1 !important;
 }
 
+/* ========== ESTILOS ESPECÍFICOS PARA FILTEROPTIONS ========== */
+
+/* FilterOptions en tema claro - labels más contrastados */
+:root .filter-title {
+  color: var(--color-gray-900) !important;
+  font-weight: 600 !important;
+}
+
+:root .filter-text,
+:root .filter-label {
+  color: var(--color-gray-900) !important;
+  font-weight: 600 !important;
+}
+
+/* FilterOptions en tema oscuro - mantener colores claros */
+[data-theme="dark"] .filter-title {
+  color: #f8fafc !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="dark"] .filter-text,
+[data-theme="dark"] .filter-label {
+  color: #f8fafc !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="dark"] .help-text {
+  color: #94a3b8 !important;
+}
+
 /* ========== ELEMENTOS BASE ========== */
 
 /* Headings */
