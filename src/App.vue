@@ -123,6 +123,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 
 // Importar componentes
 import DateForm from './components/DateForm.vue'
@@ -272,9 +273,11 @@ const copyResults = async () => {
 
   try {
     // Formatear fechas para copiar
-    const text = calculationResults.value.map((dateInfo, index) =>
-      `${index + 1}. ${dateInfo.formatted} (${dateInfo.dateString})`
-    ).join('\n')
+    const text = calculationResults.value.map((dateString, index) => {
+      const date = new Date(dateString)
+      const formatted = format(date, 'EEEE, dd \'de\' MMMM \'de\' yyyy', { locale: es })
+      return `${index + 1}. ${formatted}`
+    }).join('\n')
 
     await navigator.clipboard.writeText(text)
 
