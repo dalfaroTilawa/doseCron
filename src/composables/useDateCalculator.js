@@ -233,7 +233,7 @@ export function useDateCalculator(initialConfig = {}) {
       // NUEVO ENFOQUE: Cálculo matemático preciso
       // Calcular total de días en el período
       const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-      
+
       // Calcular número exacto de fechas usando división entera (redondeo hacia abajo)
       // CORRECTO: Cada fecha representa un múltiplo del intervalo
       // - Primera fecha: fecha inicial (representa día 15)
@@ -241,7 +241,7 @@ export function useDateCalculator(initialConfig = {}) {
       // - Tercera fecha: fecha inicial + 30 días (representa día 45), etc.
       // 122 días ÷ 15 intervalo = 8.1 → floor(8.1) = 8 fechas totales
       const numberOfDates = Math.floor(totalDays / config.interval)
-      
+
       // Validar que el número de fechas sea razonable
       if (numberOfDates <= 0) {
         calculatedDates.value = []
@@ -258,11 +258,11 @@ export function useDateCalculator(initialConfig = {}) {
       for (let i = 0; i < numberOfDates; i++) {
         // Calcular la fecha teórica (sin filtros) usando el intervalo
         const theoreticalDate = addDays(startDate, i * config.interval)
-        
+
         // Aplicar filtros si están habilitados para mover a día válido
         // IMPORTANTE: Los filtros NO cambian el número de fechas, solo las mueven
         const validDate = getNextValidDate(theoreticalDate, holidaysMap)
-        
+
         const exclusionInfo = checkExclusions(validDate, holidaysMap)
 
         // Crear objeto de fecha

@@ -558,13 +558,13 @@ describe('useDateCalculator', () => {
 
   // ========== TESTS PARA EL ALGORITMO CORREGIDO ==========
   describe('Algoritmo corregido: número exacto de fechas con cálculo matemático', () => {
-    
+
     it('CASO CRÍTICO: 4 meses + 15 días intervalo = exactamente 8 fechas (122÷15=8.1→8)', async () => {
       const startDate = '2025-08-14' // Fecha fija para reproducibilidad
-      
+
       // Calcular manualmente: 4 meses ≈ 122 días, 122 ÷ 15 = 8.13... → 8 fechas + inicial = 8 total
       const expectedDates = 8
-      
+
       // SIN filtros
       await calculator.updateConfig({
         startDate,
@@ -575,13 +575,13 @@ describe('useDateCalculator', () => {
         excludeHolidays: false,
         country: ''
       })
-      
+
       await calculator.calculateDates()
       const withoutFilters = calculator.calculatedDates.value
-      
+
       // Reset para el próximo test
       calculator.reset()
-      
+
       // CON filtros
       await calculator.updateConfig({
         startDate,
@@ -592,33 +592,33 @@ describe('useDateCalculator', () => {
         excludeHolidays: true,
         country: 'US'
       })
-      
+
       await calculator.calculateDates()
       const withFilters = calculator.calculatedDates.value
-      
+
       console.log(`Sin filtros: ${withoutFilters.length} fechas`)
       console.log(`Con filtros: ${withFilters.length} fechas`)
       console.log(`Esperadas: ${expectedDates} fechas`)
-      
+
       // NUEVO COMPORTAMIENTO: El número de fechas debe ser EXACTAMENTE el mismo
       expect(withoutFilters.length).toBe(expectedDates)
       expect(withFilters.length).toBe(expectedDates)
       expect(withoutFilters.length).toBe(withFilters.length)
-      
+
       // Verificar que las fechas pueden ser diferentes (por filtros) pero el número es igual
       const datesSinFiltros = withoutFilters.map(d => d.dateString)
       const datesConFiltros = withFilters.map(d => d.dateString)
-      
+
       console.log('Fechas sin filtros:', datesSinFiltros)
       console.log('Fechas con filtros:', datesConFiltros)
-      
+
       // El número debe ser idéntico
       expect(datesSinFiltros.length).toBe(datesConFiltros.length)
     })
 
     it('validación matemática: 30 días intervalo, 4 meses = exactamente 4 fechas', async () => {
       const startDate = '2025-01-01'
-      
+
       // Sin filtros
       await calculator.updateConfig({
         startDate,
@@ -629,12 +629,12 @@ describe('useDateCalculator', () => {
         excludeHolidays: false,
         country: ''
       })
-      
+
       await calculator.calculateDates()
       const withoutFilters = calculator.calculatedDates.value
-      
+
       calculator.reset()
-      
+
       // Con filtros
       await calculator.updateConfig({
         startDate,
@@ -645,22 +645,22 @@ describe('useDateCalculator', () => {
         excludeHolidays: true,
         country: 'US'
       })
-      
+
       await calculator.calculateDates()
       const withFilters = calculator.calculatedDates.value
-      
+
       // 4 meses ≈ 120 días, 120 ÷ 30 = 4.0 → exactamente 4 fechas
       expect(withoutFilters.length).toBe(4)
       expect(withFilters.length).toBe(4)
       expect(withoutFilters.length).toBe(withFilters.length)
-      
+
       console.log('30 días intervalo - Sin filtros:', withoutFilters.map(d => d.dateString))
       console.log('30 días intervalo - Con filtros:', withFilters.map(d => d.dateString))
     })
-    
+
     it('caso límite: 7 días intervalo, 2 semanas = exactamente 2 fechas', async () => {
       const startDate = '2025-01-01'
-      
+
       // Sin filtros
       await calculator.updateConfig({
         startDate,
@@ -671,12 +671,12 @@ describe('useDateCalculator', () => {
         excludeHolidays: false,
         country: ''
       })
-      
+
       await calculator.calculateDates()
       const withoutFilters = calculator.calculatedDates.value
-      
+
       calculator.reset()
-      
+
       // Con filtros (usando fecha que cae en fin de semana)
       await calculator.updateConfig({
         startDate: '2025-08-16', // Sábado
@@ -687,19 +687,19 @@ describe('useDateCalculator', () => {
         excludeHolidays: false,
         country: ''
       })
-      
+
       await calculator.calculateDates()
       const withFilters = calculator.calculatedDates.value
-      
+
       // 2 semanas = 14 días, 14 ÷ 7 = 2.0 → exactamente 2 fechas
       expect(withoutFilters.length).toBe(2)
       expect(withFilters.length).toBe(2)
       expect(withoutFilters.length).toBe(withFilters.length)
-      
+
       // Con filtros, las fechas deben moverse pero ser la misma cantidad
       console.log('7 días intervalo - Sin filtros:', withoutFilters.map(d => d.dateString))
       console.log('7 días intervalo - Con filtros:', withFilters.map(d => `${d.dateString} (${d.dayNameShort})`))
-      
+
       // Verificar que los filtros movieron las fechas
       expect(withFilters.every(d => !d.isWeekend)).toBe(true)
     })
@@ -707,7 +707,7 @@ describe('useDateCalculator', () => {
     it('exclusiones deben generar MÁS fechas, no menos', async () => {
       // Usar fecha que sabemos que cae en fin de semana
       const startDate = '2025-08-16' // Es sábado
-      
+
       // SIN exclusiones
       await calculator.updateConfig({
         startDate,
@@ -718,12 +718,12 @@ describe('useDateCalculator', () => {
         excludeHolidays: false,
         country: ''
       })
-      
+
       await calculator.calculateDates()
       const withoutExclusions = calculator.calculatedDates.value
-      
+
       calculator.reset()
-      
+
       // CON exclusiones de fin de semana
       await calculator.updateConfig({
         startDate,
@@ -734,16 +734,16 @@ describe('useDateCalculator', () => {
         excludeHolidays: false,
         country: ''
       })
-      
+
       await calculator.calculateDates()
       const withExclusions = calculator.calculatedDates.value
-      
+
       console.log('Sin exclusiones:', withoutExclusions.map(d => `${d.dateString} (${d.dayNameShort})`))
       console.log('Con exclusiones:', withExclusions.map(d => `${d.dateString} (${d.dayNameShort})`))
-      
+
       // Con exclusiones debería tener igual o más fechas
       expect(withExclusions.length).toBeGreaterThanOrEqual(withoutExclusions.length)
-      
+
       // Y todas las fechas con exclusiones NO deben ser fines de semana
       withExclusions.forEach(date => {
         expect(date.isWeekend).toBe(false)
