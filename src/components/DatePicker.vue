@@ -100,8 +100,9 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { format, parseISO, isValid, isToday, isFuture, isPast } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { es, enUS } from 'date-fns/locale'
 import { DateValidator } from '../utils/validation.js'
+import { useI18n } from '../composables/useI18n.js'
 
 // Props
 const props = defineProps({
@@ -114,7 +115,7 @@ const props = defineProps({
   // Etiqueta del campo
   label: {
     type: String,
-    default: 'Fecha'
+    default: ''
   },
 
   // Placeholder del input
@@ -193,6 +194,14 @@ const props = defineProps({
 // Eventos
 const emit = defineEmits(['update:modelValue', 'change', 'focus', 'blur', 'error'])
 
+// Composables
+const { t, currentLocale } = useI18n()
+
+// Locale de date-fns según idioma actual
+const dateLocale = computed(() => {
+  return currentLocale.value === 'en' ? enUS : es
+})
+
 // Estado reactivo
 const isFocused = ref(false)
 const internalError = ref('')
@@ -223,7 +232,7 @@ const parsedDate = computed(() => {
 const dateValidationError = computed(() => {
   const result = DateValidator.validateDate(props.modelValue, {
     required: props.required,
-    fieldName: props.label || 'fecha',
+    fieldName: props.label || t('datePicker.label'),
     min: props.min,
     max: props.max,
     allowPast: props.allowPastDates,
@@ -244,22 +253,27 @@ const formattedDateInfo = computed(() => {
 
   try {
     const date = parsedDate.value
-    const dayName = format(date, 'EEEE', { locale: es })
-    const formatted = format(date, 'dd \'de\' MMMM \'de\' yyyy', { locale: es })
+    const dayName = format(date, 'EEEE', { locale: dateLocale.value })
 
-    let info = `${dayName}, ${formatted}`
+    const formatPattern = currentLocale.value === 'en'
+      ? 'EEEE, MMMM d, yyyy'
+      : "EEEE, dd 'de' MMMM 'de' yyyy"
+
+    const formatted = format(date, formatPattern, { locale: dateLocale.value })
+
+    let info = formatted
 
     if (isToday(date)) {
-      info += ' (hoy)'
+      info += ` (${t('datePicker.dateInfo.today')})`
     } else if (isFuture(date)) {
-      info += ' (futuro)'
+      info += ` (${t('datePicker.dateInfo.future')})`
     } else if (isPast(date)) {
-      info += ' (pasado)'
+      info += ` (${t('datePicker.dateInfo.past')})`
     }
 
     return info
   } catch {
-    return 'Información de fecha no disponible'
+    return t('datePicker.dateInfoNotAvailable') || 'Date information not available'
   }
 })
 

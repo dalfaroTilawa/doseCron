@@ -23,7 +23,7 @@
         <span class="checkmark" aria-hidden="true" />
         <div class="filter-text">
           <span class="filter-icon">🏖️</span>
-          <span class="filter-label">Excluir fines de semana</span>
+          <span class="filter-label">{{ t('form.fields.excludeWeekends.label') }}</span>
         </div>
       </label>
 
@@ -45,7 +45,7 @@
         <span class="checkmark" aria-hidden="true" />
         <div class="filter-text">
           <span class="filter-icon">🎉</span>
-          <span class="filter-label">Excluir días feriados</span>
+          <span class="filter-label">{{ t('form.fields.excludeHolidays.label') }}</span>
         </div>
       </label>
     </div>
@@ -72,13 +72,13 @@
     <div v-if="showSummary && (excludeWeekends || excludeHolidays)" class="filter-summary">
       <small>
         <span v-if="excludeWeekends && excludeHolidays">
-          ⚠️ Se excluirán fines de semana y feriados
+          {{ t('exclusions.summary.both') }}
         </span>
         <span v-else-if="excludeWeekends">
-          📅 Se excluirán solo fines de semana
+          {{ t('exclusions.summary.weekendsOnly') }}
         </span>
         <span v-else-if="excludeHolidays">
-          🎊 Se excluirán solo feriados
+          {{ t('exclusions.summary.holidaysOnly') }}
         </span>
       </small>
     </div>
@@ -87,6 +87,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from '../composables/useI18n.js'
 
 // Props
 const props = defineProps({
@@ -155,6 +156,9 @@ const emit = defineEmits([
   'update:excludeHolidays',
   'change'
 ])
+
+// Composables
+const { t } = useI18n()
 
 // IDs únicos para accesibilidad
 const idPrefix = computed(() =>

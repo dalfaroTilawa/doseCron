@@ -20,35 +20,71 @@
 - **Estado**: Reactive data con Vue 3 reactivity
 - **Persistencia**: localStorage para configuraciones del usuario
 
-## Convenciones Específicas
+## Diagrama de Arquitectura
 
-### Estructura de Componentes
-- **Principio de responsabilidad única**: cada componente maneja una funcionalidad específica
-- **Composables para lógica compartida**: `useDateCalculator`, `useSettings`
-- **Props tipados** y **eventos bien definidos**
+### Representación Visual de la Arquitectura
 
-### Gestión de Fechas
-- **Siempre usar `date-fns`** para operaciones con fechas
-- **Formato ISO**: `yyyy-MM-dd` para inputs y almacenamiento
-- **Localización**: usar locale `es` para mostrar fechas al usuario
-- **Validación**: verificar `isValid()` antes de procesar fechas
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     DoseCron - Arquitectura Frontend                │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  🎨 COMPONENTS LAYER                                                │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  App.vue (Raíz)                                             │    │
+│  │    ├─→ DateForm.vue (Formulario Principal)                  │    │
+│  │    │     ├─→ DatePicker.vue (Selector Fechas)              │    │
+│  │    │     └─→ ResultsList.vue (Lista Resultados)            │    │
+│  │    ├─→ ThemeToggle.vue (Cambio Tema)                       │    │
+│  │    └─→ LanguageSelector.vue (Selector Idioma)             │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                 ↓                                   │
+│  🔧 COMPOSABLES LAYER                                               │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  • useDateCalculator() ←─ Lógica de cálculo de fechas       │    │
+│  │  • useSettings() ←─ Persistencia de configuraciones         │    │
+│  │  • useTheme() ←─ Manejo de tema claro/oscuro               │    │
+│  │  • useI18n() ←─ Internacionalización extendida             │    │
+│  │  • useValidation() ←─ Validaciones de formulario           │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                 ↓                                   │
+│  ⚙️ SERVICES LAYER                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  • DateService ←─ Wrapper de date-fns                      │    │
+│  │  • HolidayService ←─ Integración API feriados              │    │
+│  │  • StorageService ←─ Abstracción localStorage              │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                 ↓                                   │
+│  🌐 EXTERNAL DEPENDENCIES                                           │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  • date-fns (Manipulación fechas)                          │    │
+│  │  • date-fns/locale/es (Localización)                       │    │
+│  │  • Holiday API (Feriados por país)                         │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                                                     │
+│  💾 BROWSER STORAGE                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  localStorage (Configuraciones de usuario)                  │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
-### Tema y Diseño
-- **CSS custom properties** para sistema de colores consistente
-- **Modo claro/oscuro** con persistencia en localStorage
-- **Diseño responsive** con mobile-first approach
-- **Accesibilidad**: ARIA labels, estados de focus visibles
+### Flujo de Datos Principal
 
-### Validaciones
-- **Tiempo real** cuando `realtimeValidation: true`
-- **Mensajes descriptivos** en español
-- **Advertencias no bloqueantes** vs errores críticos
-- **Validación específica**: duración vs intervalo cuando `durationUnit === 'days'`
-
-### Estado y Persistencia
-- **Configuraciones del usuario** se guardan automáticamente en localStorage
-- **Estados reactivos** para UI responsive
-- **Manejo centralizado de errores** con sistema de notificaciones
+```
+👤 Usuario interactúa con DateForm.vue
+         ↓
+🔧 DateForm usa useDateCalculator() y useValidation()
+         ↓
+⚙️ useDateCalculator() consume DateService y HolidayService
+         ↓
+🌐 DateService procesa con date-fns + localización
+🌐 HolidayService consulta API externa de feriados
+         ↓
+📊 Resultados calculados se muestran en ResultsList.vue
+         ↓
+💾 Configuraciones se persisten vía useSettings() → StorageService
+```
 
 ## Comandos Frecuentes
 
@@ -96,6 +132,7 @@ npm run test:watch
 ### Composables
 - **useDateCalculator**: Lógica central de cálculo de fechas
 - **useSettings**: Persistencia de configuraciones
+- **useI18n**: Internacionalización con funciones especializadas
 - Seguir patrón: `const { state, actions } = useComposable()`
 
 ### Componentes de Formulario
@@ -108,7 +145,7 @@ npm run test:watch
 - **Errores locales**: fieldErrors reactive object
 - **Errores globales**: globalError ref + notificaciones
 - **Try-catch** en operaciones async
-- **Mensajes user-friendly** en español
+- **Mensajes user-friendly** localizados según idioma activo
 
 ### Estructura de Archivos
 ```
@@ -117,11 +154,77 @@ src/
 │   ├── DateForm.vue     # Formulario principal  
 │   ├── DatePicker.vue   # Selector de fechas
 │   ├── ResultsList.vue  # Lista de resultados
+│   ├── LanguageSelector.vue # Selector de idioma
 │   └── ...
 ├── composables/         # Lógica reutilizable
+│   ├── useDateCalculator.js
+│   ├── useSettings.js
+│   ├── useI18n.js      # Composable de i18n extendido
+│   └── ...
+├── locales/            # Archivos de internacionalización
+│   ├── index.js        # Configuración central
+│   ├── es.js          # Traducciones en español
+│   ├── en.js          # Traducciones en inglés
+│   └── ...
+├── plugins/            # Plugins de Vue
+│   ├── i18n.js        # Configuración Vue I18n
+│   └── ...
 ├── services/           # APIs y servicios externos
 └── App.vue            # Componente raíz
 ```
+
+## Convenciones de Internacionalización
+
+### Estructura de Traducciones
+```javascript
+// Organización jerárquica por contexto
+{
+  app: { title, subtitle, description },
+  form: { 
+    basicConfig, 
+    fields: { startDate: { label, helpText, required } }
+  },
+  validation: { required, invalidDate, minNumber },
+  errors: { calculation, network, generic },
+  warnings: { noCountry, longInterval }
+}
+```
+
+### Uso del Composable useI18n
+```javascript
+// En componentes Vue
+const { t, validateMessage, errorMessage, fieldLabel } = useI18n()
+
+// Traducción general
+{{ t('form.basicConfig') }}
+
+// Traducción con contexto específico
+{{ validateMessage('required') }}  // validation.required
+{{ errorMessage('calculation') }}  // errors.calculation
+{{ fieldLabel('startDate', 'label') }}  // form.fields.startDate.label
+```
+
+### Interpolación de Parámetros
+```javascript
+// Con parámetros dinámicos
+{{ t('validation.minNumber', { min: 1 }) }}
+{{ t('warnings.durationShorterThanInterval', { duration: 5, interval: 7 }) }}
+
+// Pluralización automática
+{{ formatInterval(7) }}  // "Cada 7 días"
+{{ formatTimeUnit(1, 'month') }}  // "mes" vs "meses"
+```
+
+### Persistencia y Detección
+- **Detección automática**: `getBrowserLocale()` con fallback a español
+- **Persistencia**: `localStorage.setItem('dosecron-locale', code)`
+- **Cambio dinámico**: `setLocale(newCode)` actualiza toda la UI
+
+### Convenciones de Claves
+- **Kebab-case** para archivos: `es.js`, `en.js`
+- **camelCase** para propiedades: `startDate`, `helpText`
+- **Contexto específico**: `form.fields.*.label` vs `validation.*`
+- **Interpolación clara**: `{count}`, `{min}`, `{max}`, `{duration}`
 
 ## Consideraciones de Mantenimiento
 

@@ -5,6 +5,87 @@
 
 import { isValid, parseISO, isPast, isFuture, isToday } from 'date-fns'
 
+// Helper para obtener traducciones cuando están disponibles
+let i18nInstance = null
+
+/**
+ * Sanitiza mensajes de error para prevenir XSS
+ * @param {string} message - Mensaje a sanitizar
+ * @returns {string} Mensaje sanitizado
+ */
+export const sanitizeErrorMessage = (message) => {
+  if (typeof message !== 'string') return String(message)
+
+  // Remover scripts y contenido HTML potencialmente peligroso
+  return message
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+    .trim()
+}
+
+export const setI18nInstance = (i18n) => {
+  i18nInstance = i18n
+}
+
+const getTranslation = (key, params = {}) => {
+  if (i18nInstance && typeof i18nInstance.t === 'function') {
+    try {
+      return i18nInstance.t(key, params)
+    } catch (error) {
+      console.warn(`Translation missing for key: ${key}`, error)
+    }
+  }
+
+  // Get current locale or default to 'es'
+  const currentLocale = i18nInstance?.locale?.value || 'es'
+
+  // Fallback messages in multiple languages
+  const fallbacks = {
+    es: {
+      'validation.required': 'Este campo es requerido',
+      'validation.invalidDate': 'Formato de fecha inválido',
+      'validation.pastDateNotAllowed': 'No se permiten fechas pasadas',
+      'validation.futureDateNotAllowed': 'No se permiten fechas futuras',
+      'validation.minDate': 'La fecha debe ser posterior a {min}',
+      'validation.maxDate': 'La fecha debe ser anterior a {max}',
+      'validation.invalidNumber': 'Debe ser un número válido',
+      'validation.minNumber': 'Debe ser mayor a {min}',
+      'validation.mustBeInteger': 'Debe ser un número entero',
+      'validation.dateNotProvided': 'Fecha no proporcionada',
+      'validation.intervalField': 'El intervalo',
+      'validation.durationField': 'La duración'
+    },
+    en: {
+      'validation.required': 'This field is required',
+      'validation.invalidDate': 'Invalid date format',
+      'validation.pastDateNotAllowed': 'Past dates are not allowed',
+      'validation.futureDateNotAllowed': 'Future dates are not allowed',
+      'validation.minDate': 'Date must be after {min}',
+      'validation.maxDate': 'Date must be before {max}',
+      'validation.invalidNumber': 'Must be a valid number',
+      'validation.minNumber': 'Must be greater than {min}',
+      'validation.mustBeInteger': 'Must be an integer',
+      'validation.dateNotProvided': 'Date not provided',
+      'validation.intervalField': 'The interval',
+      'validation.durationField': 'The duration'
+    }
+  }
+
+  const localeFallbacks = fallbacks[currentLocale] || fallbacks.es
+  let message = localeFallbacks[key] || key
+
+  // Simple parameter replacement
+  if (params && typeof params === 'object') {
+    Object.keys(params).forEach(paramKey => {
+      message = message.replace(new RegExp(`{${paramKey}}`, 'g'), params[paramKey])
+    })
+  }
+
+  return message
+}
+
 /**
  * Resultado de validación
  * @typedef {Object} ValidationResult
@@ -26,7 +107,7 @@ export class DateValidator {
     if (!value || value === null || value === '') {
       return {
         isValid: false,
-        error: `${fieldName} es requerido`
+        error: getTranslation('validation.required')
       }
     }
     return { isValid: true, error: '' }
@@ -39,17 +120,17 @@ export class DateValidator {
    */
   static validateDateFormat(dateString) {
     if (!dateString) {
-      return { isValid: false, error: 'Fecha no proporcionada' }
+      return { isValid: false, error: getTranslation('validation.dateNotProvided') }
     }
 
     try {
       const date = parseISO(dateString)
       if (!isValid(date)) {
-        return { isValid: false, error: 'Formato de fecha inválido' }
+        return { isValid: false, error: getTranslation('validation.invalidDate') }
       }
       return { isValid: true, error: '' }
     } catch {
-      return { isValid: false, error: 'Formato de fecha inválido' }
+      return { isValid: false, error: getTranslation('validation.invalidDate') }
     }
   }
 
@@ -69,14 +150,14 @@ export class DateValidator {
     if (min && dateString < min) {
       return {
         isValid: false,
-        error: `La fecha debe ser posterior a ${this.formatDateForDisplay(min)}`
+        error: getTranslation('validation.minDate', { min: this.formatDateForDisplay(min) })
       }
     }
 
     if (max && dateString > max) {
       return {
         isValid: false,
-        error: `La fecha debe ser anterior a ${this.formatDateForDisplay(max)}`
+        error: getTranslation('validation.maxDate', { max: this.formatDateForDisplay(max) })
       }
     }
 
@@ -101,14 +182,14 @@ export class DateValidator {
     if (!allowPast && isPast(date) && !isToday(date)) {
       return {
         isValid: false,
-        error: 'No se permiten fechas pasadas'
+        error: getTranslation('validation.pastDateNotAllowed')
       }
     }
 
     if (!allowFuture && isFuture(date)) {
       return {
         isValid: false,
-        error: 'No se permiten fechas futuras'
+        error: getTranslation('validation.futureDateNotAllowed')
       }
     }
 
@@ -202,7 +283,7 @@ export class NumberValidator {
     if (value === null || value === undefined || value === '') {
       return {
         isValid: false,
-        error: `${fieldName} es requerido`
+        error: getTranslation('validation.required')
       }
     }
 
@@ -210,14 +291,14 @@ export class NumberValidator {
     if (isNaN(numValue)) {
       return {
         isValid: false,
-        error: `${fieldName} debe ser un número válido`
+        error: getTranslation('validation.invalidNumber')
       }
     }
 
     if (numValue < min) {
       return {
         isValid: false,
-        error: `${fieldName} debe ser mayor a ${min - 1}`
+        error: getTranslation('validation.minNumber', { min: min - 1 })
       }
     }
 
@@ -247,7 +328,7 @@ export class NumberValidator {
     if (!Number.isInteger(numValue)) {
       return {
         isValid: false,
-        error: `${fieldName} debe ser un número entero`
+        error: getTranslation('validation.mustBeInteger')
       }
     }
 
@@ -276,7 +357,7 @@ export class ValidatorFactory {
    * @returns {Function} Función validadora de intervalos
    */
   static createIntervalValidator() {
-    return (value) => NumberValidator.validateRange(value, 1, 365, 'El intervalo')
+    return (value) => NumberValidator.validateRange(value, 1, 365, getTranslation('validation.intervalField'))
   }
 
   /**
@@ -284,7 +365,7 @@ export class ValidatorFactory {
    * @returns {Function} Función validadora de duración
    */
   static createDurationValidator() {
-    return (value) => NumberValidator.validateRange(value, 1, 100, 'La duración')
+    return (value) => NumberValidator.validateRange(value, 1, 100, getTranslation('validation.durationField'))
   }
 
   /**

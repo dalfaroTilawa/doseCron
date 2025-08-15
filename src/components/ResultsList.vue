@@ -6,7 +6,7 @@
     <div v-if="isLoading" class="loading-state">
       <div class="loading-spinner" />
       <p class="loading-text">
-        {{ loadingText }}
+        {{ loadingText || t('results.loading') }}
       </p>
     </div>
 
@@ -16,10 +16,10 @@
         📭
       </div>
       <h4 class="empty-title">
-        {{ emptyTitle }}
+        {{ emptyTitle || t('results.empty.title') }}
       </h4>
       <p class="empty-message">
-        {{ emptyMessage }}
+        {{ emptyMessage || t('results.empty.message') }}
       </p>
     </div>
 
@@ -47,9 +47,9 @@
               <div class="date-meta">
                 <span class="date-iso">{{ dateInfo.iso }}</span>
                 <div class="date-badges">
-                  <span v-if="dateInfo.isToday" class="badge badge-today">Hoy</span>
-                  <span v-if="dateInfo.isWeekend" class="badge badge-weekend">Fin de semana</span>
-                  <span v-if="dateInfo.isHoliday" class="badge badge-holiday">Feriado</span>
+                  <span v-if="dateInfo.isToday" class="badge badge-today">{{ t('results.badges.today') }}</span>
+                  <span v-if="dateInfo.isWeekend" class="badge badge-weekend">{{ t('results.badges.weekend') }}</span>
+                  <span v-if="dateInfo.isHoliday" class="badge badge-holiday">{{ t('results.badges.holiday') }}</span>
                 </div>
               </div>
             </div>
@@ -62,15 +62,15 @@
         <div class="summary-stats">
           <span class="stat-item">
             <span class="stat-icon">📅</span>
-            <span class="stat-text">Total: {{ dates.length }}</span>
+            <span class="stat-text">{{ t('results.summary.total') }} {{ dates.length }}</span>
           </span>
           <span v-if="weekendCount > 0" class="stat-item">
             <span class="stat-icon">🏖️</span>
-            <span class="stat-text">Fines de semana: {{ weekendCount }}</span>
+            <span class="stat-text">{{ t('results.summary.weekends') }} {{ weekendCount }}</span>
           </span>
           <span v-if="holidayCount > 0" class="stat-item">
             <span class="stat-icon">🎉</span>
-            <span class="stat-text">Feriados: {{ holidayCount }}</span>
+            <span class="stat-text">{{ t('results.summary.holidays') }} {{ holidayCount }}</span>
           </span>
         </div>
       </div>
@@ -86,7 +86,11 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { format, parseISO, isWeekend, isSameDay, startOfDay } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { es, enUS } from 'date-fns/locale'
+import { useI18n } from '../composables/useI18n.js'
+
+// Composables
+const { t, currentLocale } = useI18n()
 
 const props = defineProps({
   // Array de fechas (strings ISO o objetos Date)
@@ -149,6 +153,11 @@ const emit = defineEmits(['export', 'error'])
 const isExporting = ref(false)
 const exportFeedback = ref(null)
 
+// Locale de date-fns según idioma actual
+const dateLocale = computed(() => {
+  return currentLocale.value === 'en' ? enUS : es
+})
+
 // Formatear fechas con información adicional
 const formattedDates = computed(() => {
   const today = startOfDay(new Date())
@@ -158,8 +167,11 @@ const formattedDates = computed(() => {
     const dateObj = typeof date === 'string' ? parseISO(date) : date
     const dateStart = startOfDay(dateObj)
 
-    // Formatear fecha en español
-    const formatted = format(dateObj, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
+    // Formatear fecha según idioma actual
+    const formatPattern = currentLocale.value === 'en'
+      ? 'EEEE, MMMM d, yyyy'
+      : "EEEE, d 'de' MMMM 'de' yyyy"
+    const formatted = format(dateObj, formatPattern, { locale: dateLocale.value })
 
     // Información adicional
     const isWeekendDay = isWeekend(dateObj)

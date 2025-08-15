@@ -1,23 +1,40 @@
 <template>
   <div class="bg-surface-primary border border-border-primary rounded-lg shadow-sm overflow-hidden transition-shadow duration-fast hover:shadow-md">
     <!-- Header del formulario -->
-    <div class="p-6 border-b border-border-primary bg-bg-secondary">
-      <h2 class="text-2xl font-extrabold text-text-primary mb-3 flex items-center gap-3">
-        <span class="text-3xl">📅</span>
-        Calculadora de Fechas Recurrentes
-      </h2>
-      <p class="text-base text-text-secondary leading-relaxed">
-        Genera una lista de fechas recurrentes con exclusión inteligente de fines de semana y feriados
-      </p>
+    <div class="p-3 sm:p-6 border-b border-border-primary bg-bg-secondary">
+      <!-- Layout mobile: stack vertical, desktop: horizontal -->
+      <div class="flex flex-col space-y-2 sm:space-y-3 md:flex-row md:items-start md:justify-between md:space-y-0">
+        <!-- Contenido principal del header -->
+        <div class="flex-1 min-w-0 pr-2 md:pr-0 overflow-hidden">
+          <!-- Título responsive con mejor scaling -->
+          <h2 class="text-base sm:text-lg md:text-2xl font-extrabold text-text-primary mb-1 sm:mb-2 md:mb-3 flex items-center gap-1 sm:gap-2 md:gap-3">
+            <span class="text-lg sm:text-xl md:text-3xl flex-shrink-0">📅</span>
+            <span class="leading-tight break-words min-w-0">{{ t('app.subtitle') }}</span>
+          </h2>
+
+          <!-- Descripción optimizada para móvil -->
+          <p class="text-xs sm:text-sm md:text-base text-text-secondary leading-relaxed max-w-none md:max-w-2xl">
+            <span class="md:hidden">{{ t('app.descriptionShort') }}</span>
+            <span class="hidden md:inline">{{ t('app.description') }}</span>
+          </p>
+        </div>
+
+        <!-- Selector de idioma - posición responsive mejorada -->
+        <div class="flex-shrink-0 self-center md:self-start md:ml-4 lg:ml-6">
+          <div class="flex justify-center md:justify-start">
+            <LanguageSwitcher :show-tooltip="false" size="small" class="scale-75 sm:scale-90 md:scale-100" />
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Formulario principal -->
-    <form class="p-6 space-y-8" novalidate @submit.prevent="handleSubmit">
+    <form class="p-4 sm:p-6 space-y-6 sm:space-y-8" novalidate @submit.prevent="handleSubmit">
       <!-- Sección: Configuración Básica -->
       <div class="space-y-6">
         <h3 class="text-xl font-bold text-text-primary flex items-center gap-3 mb-6">
           <span class="text-lg">⚙️</span>
-          Configuración Básica
+          {{ t('form.basicConfig') }}
         </h3>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -25,12 +42,12 @@
           <div class="form-field">
             <DatePicker
               v-model="formData.startDate"
-              label="Fecha inicial *"
+              :label="t('form.fields.startDate.required')"
               :required="true"
               :allow-past-dates="allowPastDates"
               :allow-future-dates="true"
               :error-message="fieldErrors.startDate"
-              help-text="Fecha de inicio para el cálculo de fechas recurrentes"
+              :help-text="t('form.fields.startDate.helpText')"
               show-date-info
               custom-id="start-date"
               @change="onStartDateChange"
@@ -41,7 +58,7 @@
           <!-- Intervalo -->
           <div class="space-y-3">
             <label for="interval" class="block text-sm font-semibold text-text-primary mb-2">
-              Intervalo (días) *
+              {{ t('form.fields.interval.label') }} *
               <span class="text-error-500">*</span>
             </label>
             <div class="relative">
@@ -55,12 +72,12 @@
                 :class="['w-full pr-20 py-3 px-4 border rounded-base bg-surface-primary text-text-primary placeholder-text-placeholder transition-all duration-fast focus:outline-none focus:ring-3 focus:ring-primary-500/10 focus:border-border-focus', { 'border-error-500': fieldErrors.interval, 'border-border-primary': !fieldErrors.interval }]"
                 :aria-invalid="!!fieldErrors.interval"
                 :aria-describedby="fieldErrors.interval ? 'interval-error' : 'interval-help'"
-                placeholder="Ej: 15"
+                :placeholder="t('form.fields.interval.placeholder')"
                 required
                 @input="onIntervalChange"
                 @blur="validateInterval"
               >
-              <span class="absolute right-12 top-1/2 -translate-y-1/2 text-sm text-text-muted font-medium pointer-events-none">días</span>
+              <span class="absolute right-12 top-1/2 -translate-y-1/2 text-sm text-text-muted font-medium pointer-events-none">{{ t('form.texts.days') }}</span>
             </div>
             <div
               v-if="fieldErrors.interval"
@@ -71,14 +88,14 @@
               {{ fieldErrors.interval }}
             </div>
             <div v-else id="interval-help" class="text-sm text-text-muted mt-2 font-medium">
-              Número de días entre cada fecha generada (1-365)
+              {{ t('form.fields.interval.helpText') }}
             </div>
           </div>
 
           <!-- Duración -->
           <div class="space-y-3">
             <label for="duration" class="block text-sm font-semibold text-text-primary mb-2">
-              Duración *
+              {{ t('form.fields.duration.label') }} *
               <span class="text-error-500">*</span>
             </label>
             <div class="flex gap-3">
@@ -92,7 +109,7 @@
                   step="1"
                   :class="['w-full py-3 px-4 border rounded-base bg-surface-primary text-text-primary placeholder-text-placeholder transition-all duration-fast focus:outline-none focus:ring-3 focus:ring-primary-500/10 focus:border-border-focus', { 'border-error-500': fieldErrors.duration, 'border-border-primary': !fieldErrors.duration }]"
                   :aria-invalid="!!fieldErrors.duration"
-                  placeholder="Ej: 4"
+                  :placeholder="t('form.fields.duration.placeholder')"
                   required
                   @input="onDurationChange"
                   @blur="validateDuration"
@@ -104,16 +121,16 @@
                 @change="onDurationUnitChange"
               >
                 <option value="days">
-                  Días
+                  {{ t('form.fields.durationUnit.options.days') }}
                 </option>
                 <option value="weeks">
-                  Semanas
+                  {{ t('form.fields.durationUnit.options.weeks') }}
                 </option>
                 <option value="months">
-                  Meses
+                  {{ t('form.fields.durationUnit.options.months') }}
                 </option>
                 <option value="years">
-                  Años
+                  {{ t('form.fields.durationUnit.options.years') }}
                 </option>
               </select>
             </div>
@@ -121,7 +138,7 @@
               {{ fieldErrors.duration || fieldErrors.durationUnit }}
             </div>
             <div v-else class="text-sm text-text-muted mt-2 font-medium">
-              Período total durante el cual generar fechas
+              {{ t('form.fields.duration.helpText') }}
             </div>
           </div>
 
@@ -130,9 +147,11 @@
             <div class="bg-error-50 border border-error-200 rounded-lg p-4 flex items-start gap-3">
               <span class="text-lg flex-shrink-0 mt-0.5">⚠️</span>
               <div>
-                <p class="text-error-700 font-medium">{{ fieldErrors.intervalVsDuration }}</p>
+                <p class="text-error-700 font-medium">
+                  {{ fieldErrors.intervalVsDuration }}
+                </p>
                 <p class="text-error-600 text-sm mt-2">
-                  Sugerencia: Reduce el intervalo o aumenta la duración para generar fechas recurrentes.
+                  {{ t('form.texts.intervalVsDurationSuggestion') }}
                 </p>
               </div>
             </div>
@@ -149,9 +168,9 @@
               >
                 <div class="flex items-center gap-3">
                   <span class="text-sm transition-transform duration-200" :class="{'rotate-90': showExclusionOptions}">{{ showExclusionOptions ? '🔽' : '▶️' }}</span>
-                  <span class="font-semibold text-text-primary text-base">Opciones de exclusión</span>
+                  <span class="font-semibold text-text-primary text-base">{{ t('form.exclusionOptions') }}</span>
                 </div>
-                <span class="text-sm text-text-muted font-medium">(fines de semana y feriados)</span>
+                <span class="text-sm text-text-muted font-medium">{{ t('form.exclusionSubtitle') }}</span>
               </button>
 
               <div v-show="showExclusionOptions" class="mt-4 animate-slideDown">
@@ -160,11 +179,11 @@
                   <div class="w-full">
                     <CountrySelector
                       v-model="formData.country"
-                      label="País para feriados"
-                      placeholder="Selecciona un país (opcional)"
+                      :label="t('form.fields.country.label')"
+                      :placeholder="t('form.fields.country.placeholder')"
                       :required="false"
                       :error-message="fieldErrors.country"
-                      help-text="Selecciona un país para excluir automáticamente sus feriados oficiales"
+                      :help-text="t('form.fields.country.helpText')"
                       show-selected-info
                       custom-id="country-selector"
                       @change="onCountryChange"
@@ -172,16 +191,16 @@
                     />
                   </div>
 
-                  <!-- Filtros de exclusión -->
+                  <!-- Exclusion filters -->
                   <div class="w-full">
                     <FilterOptions
                       v-model:exclude-weekends="formData.excludeWeekends"
                       v-model:exclude-holidays="formData.excludeHolidays"
-                      title="Filtros de exclusión"
+                      :title="t('form.fields.filtersTitle')"
                       layout="horizontal"
                       :holidays-disabled="!formData.country"
-                      weekends-help-text="Los sábados y domingos serán omitidos del cálculo"
-                      holidays-help-text="Los feriados del país seleccionado serán omitidos"
+                      :weekends-help-text="t('form.fields.excludeWeekends.helpText')"
+                      :holidays-help-text="t('form.fields.excludeHolidays.helpText')"
                       show-summary
                       custom-id-prefix="form-filters"
                       @change="onFiltersChange"
@@ -203,9 +222,9 @@
               >
                 <div class="flex items-center gap-3">
                   <span class="text-sm transition-transform duration-200" :class="{'rotate-90': showThemeOptions}">{{ showThemeOptions ? '🔽' : '▶️' }}</span>
-                  <span class="font-semibold text-text-primary text-base">Tema de la aplicación</span>
+                  <span class="font-semibold text-text-primary text-base">{{ t('form.themeOptions') }}</span>
                 </div>
-                <span class="text-sm text-text-muted font-medium">({{ isDarkMode ? 'oscuro' : 'claro' }})</span>
+                <span class="text-sm text-text-muted font-medium">{{ isDarkMode ? t('form.themeSubtitle.dark') : t('form.themeSubtitle.light') }}</span>
               </button>
 
               <div v-show="showThemeOptions" class="mt-4 animate-slideDown">
@@ -214,24 +233,24 @@
                     <button
                       type="button"
                       :class="['flex items-center gap-2 py-3 px-4 bg-surface-secondary border border-border-primary rounded-lg cursor-pointer transition-all duration-200 hover:bg-surface-tertiary hover:border-border-secondary hover:-translate-y-0.5 text-sm text-text-primary font-medium', { 'bg-primary-500 border-primary-500 text-white -translate-y-0.5 shadow-primary-200': !isDarkMode }]"
-                      title="Modo claro"
+                      :title="t('theme.lightTitle')"
                       @click="setTheme('light')"
                     >
                       <span class="text-lg leading-none">☀️</span>
-                      <span>Claro</span>
+                      <span>{{ t('theme.light') }}</span>
                     </button>
                     <button
                       type="button"
                       :class="['flex items-center gap-2 py-3 px-4 bg-surface-secondary border border-border-primary rounded-lg cursor-pointer transition-all duration-200 hover:bg-surface-tertiary hover:border-border-secondary hover:-translate-y-0.5 text-sm text-text-primary font-medium', { 'bg-primary-500 border-primary-500 text-white -translate-y-0.5 shadow-primary-200': isDarkMode }]"
-                      title="Modo oscuro"
+                      :title="t('theme.darkTitle')"
                       @click="setTheme('dark')"
                     >
                       <span class="text-lg leading-none">🌙</span>
-                      <span>Oscuro</span>
+                      <span>{{ t('theme.dark') }}</span>
                     </button>
                   </div>
                   <div class="text-sm text-text-muted mt-2 font-medium">
-                    Selecciona el tema visual de la aplicación
+                    {{ t('theme.description') }}
                   </div>
                 </div>
               </div>
@@ -259,7 +278,7 @@
           <span v-if="isCalculating" class="animate-spin text-lg">⏳</span>
           <span v-else class="text-lg">{{ isCalculating ? '⏳' : '🔄' }}</span>
           <span>
-            {{ isCalculating ? 'Calculando...' : 'Calcular Fechas' }}
+            {{ isCalculating ? t('form.buttons.calculating') : t('form.buttons.calculate') }}
           </span>
         </button>
 
@@ -270,30 +289,30 @@
           @click="resetForm"
         >
           <span class="text-lg">🗑️</span>
-          <span>Resetear</span>
+          <span>{{ t('form.buttons.reset') }}</span>
         </button>
       </div>
 
       <!-- Resumen de configuración -->
       <div v-if="configSummary" class="bg-surface-primary border border-border-primary rounded-lg p-6 shadow-sm">
         <h4 class="text-lg font-bold text-primary-600 mb-4 flex items-center gap-2">
-          <span>📋</span> Resumen de configuración:
+          <span>📋</span> {{ t('form.summary.title') }}
         </h4>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="text-sm">
-            <span class="font-semibold text-text-primary">Inicio:</span> <span class="text-text-secondary font-medium">{{ configSummary.startDate }}</span>
+            <span class="font-semibold text-text-primary">{{ t('form.summary.labels.startDate') }}</span> <span class="text-text-secondary font-medium">{{ configSummary.startDate }}</span>
           </div>
           <div class="text-sm">
-            <span class="font-semibold text-text-primary">Intervalo:</span> <span class="text-text-secondary font-medium">{{ configSummary.interval }}</span>
+            <span class="font-semibold text-text-primary">{{ t('form.summary.labels.interval') }}</span> <span class="text-text-secondary font-medium">{{ configSummary.interval }}</span>
           </div>
           <div class="text-sm">
-            <span class="font-semibold text-text-primary">Duración:</span> <span class="text-text-secondary font-medium">{{ configSummary.duration }}</span>
+            <span class="font-semibold text-text-primary">{{ t('form.summary.labels.duration') }}</span> <span class="text-text-secondary font-medium">{{ configSummary.duration }}</span>
           </div>
           <div class="text-sm">
-            <span class="font-semibold text-text-primary">País:</span> <span class="text-text-secondary font-medium">{{ configSummary.country }}</span>
+            <span class="font-semibold text-text-primary">{{ t('form.summary.labels.country') }}</span> <span class="text-text-secondary font-medium">{{ configSummary.country }}</span>
           </div>
           <div class="text-sm">
-            <span class="font-semibold text-text-primary">Exclusiones:</span> <span class="text-text-secondary font-medium">{{ configSummary.exclusions }}</span>
+            <span class="font-semibold text-text-primary">{{ t('form.summary.labels.exclusions') }}</span> <span class="text-text-secondary font-medium">{{ configSummary.exclusions }}</span>
           </div>
         </div>
       </div>
@@ -314,20 +333,22 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import { format, parseISO } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { es, enUS } from 'date-fns/locale'
 
 // Importar componentes
 import DatePicker from './DatePicker.vue'
 import CountrySelector from './CountrySelector.vue'
 import FilterOptions from './FilterOptions.vue'
+import LanguageSwitcher from './LanguageSwitcher.vue'
 
 // Importar composables
 import { useDateCalculator } from '../composables/useDateCalculator.js'
 import { useSettings } from '../composables/useSettings.js'
+import { useI18n } from '../composables/useI18n.js'
 
 // Importar servicios
 import { getCountries } from '../services/holidayApi.js'
-import { DateValidator, ValidatorFactory, DurationValidator } from '../utils/validation.js'
+import { DateValidator, ValidatorFactory, DurationValidator, setI18nInstance } from '../utils/validation.js'
 
 const props = defineProps({
   // Configuración inicial opcional
@@ -367,6 +388,16 @@ const emit = defineEmits([
 // Composables
 const { settings, saveSetting, loadSetting } = useSettings()
 const calculator = useDateCalculator()
+const i18nInstance = useI18n()
+const { t, validateMessage, errorMessage, formatInterval, currentLocale } = i18nInstance
+
+// Configurar i18n en validaciones
+setI18nInstance(i18nInstance)
+
+// Locale de date-fns según idioma actual
+const dateLocale = computed(() => {
+  return currentLocale.value === 'en' ? enUS : es
+})
 
 // Estado del formulario
 const formData = reactive({
@@ -426,7 +457,7 @@ const loadInitialConfig = () => {
 const validateStartDate = () => {
   const result = DateValidator.validateDate(formData.startDate, {
     required: true,
-    fieldName: 'La fecha inicial',
+    fieldName: t('form.fields.startDate.label'),
     allowPast: props.allowPastDates,
     allowFuture: true
   })
@@ -445,7 +476,7 @@ const validateIntervalVsDuration = () => {
     formData.duration,
     formData.durationUnit
   )
-  
+
   fieldErrors.intervalVsDuration = result.error
   return result.isValid
 }
@@ -468,7 +499,7 @@ const isFormValid = computed(() => {
 })
 
 const selectedCountryName = computed(() => {
-  if (!formData.country) return 'No seleccionado'
+  if (!formData.country) return t('form.fields.country.noSelection')
   const country = countriesList.value.find(c => c.code === formData.country)
   return country ? country.name : formData.country
 })
@@ -479,14 +510,14 @@ const formWarnings = computed(() => {
   if (formData.excludeHolidays && !formData.country) {
     warnings.push({
       type: 'no-country',
-      message: 'Has seleccionado excluir feriados pero no hay país seleccionado'
+      message: t('warnings.noCountry')
     })
   }
 
   if (formData.interval > 30) {
     warnings.push({
       type: 'long-interval',
-      message: 'Un intervalo muy largo puede generar pocas fechas'
+      message: t('warnings.longInterval')
     })
   }
 
@@ -494,7 +525,7 @@ const formWarnings = computed(() => {
   if (formData.durationUnit === 'days' && formData.duration < formData.interval) {
     warnings.push({
       type: 'duration-shorter-than-interval',
-      message: `La duración (${formData.duration} días) es menor al intervalo (${formData.interval} días). Esto generará solo la fecha inicial sin recurrencias.`
+      message: t('warnings.durationShorterThanInterval', { duration: formData.duration, interval: formData.interval })
     })
   }
 
@@ -506,15 +537,37 @@ const configSummary = computed(() => {
 
   const startDateObj = parseISO(formData.startDate)
   const exclusionsList = []
-  if (formData.excludeWeekends) exclusionsList.push('fines de semana')
-  if (formData.excludeHolidays && formData.country) exclusionsList.push('feriados')
+  if (formData.excludeWeekends) exclusionsList.push(t('exclusions.weekends'))
+  if (formData.excludeHolidays && formData.country) exclusionsList.push(t('exclusions.holidays'))
+
+  const formatPattern = currentLocale.value === 'en'
+    ? 'MMMM d, yyyy'
+    : "d 'de' MMMM 'de' yyyy"
+
+  const intervalText = currentLocale.value === 'en'
+    ? `Every ${formData.interval} day${formData.interval !== 1 ? 's' : ''}`
+    : `Cada ${formData.interval} día${formData.interval !== 1 ? 's' : ''}`
+
+  const getDurationUnit = (unit, count) => {
+    if (currentLocale.value === 'en') {
+      const units = { days: 'day', weeks: 'week', months: 'month', years: 'year' }
+      const unitName = units[unit] || unit
+      return count === 1 ? unitName : unitName + 's'
+    } else {
+      const units = { days: 'día', weeks: 'semana', months: 'mes', years: 'año' }
+      const unitName = units[unit] || unit
+      return count === 1 ? unitName : unitName + 's'
+    }
+  }
+
+  const noneText = t('exclusions.none')
 
   return {
-    startDate: format(startDateObj, "d 'de' MMMM 'de' yyyy", { locale: es }),
-    interval: `Cada ${formData.interval} día${formData.interval !== 1 ? 's' : ''}`,
-    duration: `${formData.duration} ${formData.durationUnit === 'days' ? 'días' : formData.durationUnit === 'weeks' ? 'semanas' : formData.durationUnit === 'months' ? 'meses' : 'años'}`,
+    startDate: format(startDateObj, formatPattern, { locale: dateLocale.value }),
+    interval: intervalText,
+    duration: `${formData.duration} ${getDurationUnit(formData.durationUnit, formData.duration)}`,
     country: selectedCountryName.value,
-    exclusions: exclusionsList.length > 0 ? exclusionsList.join(', ') : 'Ninguna'
+    exclusions: exclusionsList.length > 0 ? exclusionsList.join(', ') : noneText
   }
 })
 
@@ -566,12 +619,12 @@ const onFiltersChange = (changeData) => {
 }
 
 const onFieldError = (fieldName, error) => {
-  fieldErrors[fieldName] = error.message || 'Error de validación'
+  fieldErrors[fieldName] = error.message || t('validation.general')
 }
 
 const handleSubmit = async () => {
   if (!validateForm()) {
-    globalError.value = 'Por favor corrige los errores del formulario antes de continuar'
+    globalError.value = t('form.errors.fixBeforeSubmit')
     return
   }
 
@@ -602,7 +655,7 @@ const handleSubmit = async () => {
 
   } catch (error) {
     console.error('Error al calcular fechas:', error)
-    globalError.value = `Error al calcular fechas: ${error.message}`
+    globalError.value = `${t('form.errors.calculation')}: ${error.message}`
     emit('error', { action: 'calculate', error })
   } finally {
     isCalculating.value = false

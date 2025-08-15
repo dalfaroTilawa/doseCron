@@ -2,7 +2,7 @@
   <div class="country-selector">
     <label v-if="label" :for="selectId" class="country-label">
       {{ label }}
-      <span v-if="required" class="required-indicator" aria-label="Campo requerido">*</span>
+      <span v-if="required" class="required-indicator" :aria-label="t('form.texts.requiredIndicator')">*</span>
     </label>
 
     <div class="country-select-wrapper">
@@ -75,7 +75,7 @@
 
     <!-- País seleccionado (para debug/desarrollo) -->
     <div v-if="showSelectedInfo && selectedCountry" class="selected-info">
-      <small>Seleccionado: {{ selectedCountry.name }} ({{ selectedCountry.code }})</small>
+      <small>{{ t('countrySelector.selected') }}: {{ selectedCountry.name }} ({{ selectedCountry.code }})</small>
     </div>
   </div>
 </template>
@@ -83,6 +83,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { getCountries } from '../services/holidayApi.js'
+import { useI18n } from '../composables/useI18n.js'
 
 // Props
 const props = defineProps({
@@ -95,13 +96,13 @@ const props = defineProps({
   // Etiqueta del campo
   label: {
     type: String,
-    default: 'País'
+    default: ''
   },
 
   // Texto del placeholder
   placeholder: {
     type: String,
-    default: 'Selecciona un país'
+    default: ''
   },
 
   // Si el campo es requerido
@@ -144,6 +145,9 @@ const props = defineProps({
 // Eventos
 const emit = defineEmits(['update:modelValue', 'change', 'error'])
 
+// Composables
+const { t } = useI18n()
+
 // Estado reactivo
 const countries = ref([])
 const isLoading = ref(true)
@@ -170,7 +174,7 @@ const loadCountries = async () => {
     const countriesList = getCountries()
 
     if (!Array.isArray(countriesList) || countriesList.length === 0) {
-      throw new Error('No se pudieron cargar los países')
+      throw new Error(t('countrySelector.error'))
     }
 
     // Ordenar países alfabéticamente por nombre
@@ -180,7 +184,7 @@ const loadCountries = async () => {
 
   } catch (error) {
     console.error('Error cargando países:', error)
-    internalError.value = 'Error al cargar la lista de países'
+    internalError.value = t('countrySelector.error')
     emit('error', error)
   } finally {
     isLoading.value = false
@@ -212,7 +216,7 @@ const validateModelValue = () => {
     const isValid = countries.value.some(country => country.code === props.modelValue)
     if (!isValid) {
       console.warn(`CountrySelector: Código de país inválido: ${props.modelValue}`)
-      internalError.value = `Código de país inválido: ${props.modelValue}`
+      internalError.value = `${t('countrySelector.invalidCode')}: ${props.modelValue}`
     } else {
       internalError.value = ''
     }

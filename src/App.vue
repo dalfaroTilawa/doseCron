@@ -16,17 +16,19 @@
       <div class="max-w-6xl mx-auto space-y-8">
         <!-- Formulario principal -->
         <section>
-          <DateForm
-            ref="mainFormRef"
-            :allow-past-dates="true"
-            :auto-calculate="false"
-            :realtime-validation="true"
-            @calculate="onFormCalculate"
-            @reset="onFormReset"
-            @config-change="onFormConfigChange"
-            @export="onFormExport"
-            @error="onFormError"
-          />
+          <ErrorBoundary @error="onFormError">
+            <DateForm
+              ref="mainFormRef"
+              :allow-past-dates="true"
+              :auto-calculate="false"
+              :realtime-validation="true"
+              @calculate="onFormCalculate"
+              @reset="onFormReset"
+              @config-change="onFormConfigChange"
+              @export="onFormExport"
+              @error="onFormError"
+            />
+          </ErrorBoundary>
         </section>
 
         <!-- Sección de resultados -->
@@ -34,42 +36,44 @@
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 bg-surface-primary border border-border-primary rounded-lg">
             <h2 class="text-2xl font-bold text-text-primary flex items-center gap-3">
               <span class="text-2xl">📊</span>
-              Resultados del Cálculo
+              {{ t('results.calculationTitle') }}
             </h2>
             <div class="flex gap-3">
               <button
                 class="inline-flex items-center gap-2 px-4 py-2 bg-surface-secondary text-text-primary border border-border-primary rounded-base font-medium text-sm transition-all duration-fast hover:bg-surface-tertiary hover:border-border-secondary hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed surface-hover"
-                title="Copiar fechas al portapapeles"
+                :title="t('results.copyTooltip')"
                 :disabled="!showResults || calculationResults.length === 0"
                 @click="copyResults"
               >
-                <span>📋</span> Copiar
+                <span>📋</span> {{ t('results.copyButton') }}
               </button>
               <button
                 class="inline-flex items-center gap-2 px-4 py-2 bg-error-100 text-error-700 border border-error-200 rounded-base font-medium text-sm transition-all duration-fast hover:bg-error-200 hover:border-error-300 hover:-translate-y-0.5 surface-hover"
-                title="Limpiar resultados"
+                :title="t('results.clearTooltip')"
                 @click="clearResults"
               >
-                <span>🗑️</span> Limpiar
+                <span>🗑️</span> {{ t('results.clearButton') }}
               </button>
             </div>
           </div>
 
           <div>
-            <ResultsList
-              :dates="calculationResults"
-              :is-loading="isCalculating"
-              :holidays="calculationHolidays"
-              loading-text="Calculando fechas recurrentes..."
-              empty-title="Sin resultados"
-              empty-message="Configura los parámetros y presiona 'Calcular Fechas'."
-              :filename="exportFilename"
-              max-height="500px"
-              show-summary
-              @export="onResultsExport"
-              @copy="onResultsCopy"
-              @error="onResultsError"
-            />
+            <ErrorBoundary @error="onResultsError">
+              <ResultsList
+                :dates="calculationResults"
+                :is-loading="isCalculating"
+                :holidays="calculationHolidays"
+                loading-text="Calculando fechas recurrentes..."
+                empty-title="Sin resultados"
+                empty-message="Configura los parámetros y presiona 'Calcular Fechas'."
+                :filename="exportFilename"
+                max-height="500px"
+                show-summary
+                @export="onResultsExport"
+                @copy="onResultsCopy"
+                @error="onResultsError"
+              />
+            </ErrorBoundary>
           </div>
         </section>
       </div>
@@ -126,16 +130,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { es, enUS } from 'date-fns/locale'
 
 // Importar componentes
 import DateForm from './components/DateForm.vue'
 import ResultsList from './components/ResultsList.vue'
+import ErrorBoundary from './components/ErrorBoundary.vue'
+import { useI18n } from './composables/useI18n.js'
+import { sanitizeErrorMessage } from './utils/validation.js'
 
 // Referencias
 const mainFormRef = ref(null)
+
+// Composables
+const { t, currentLocale } = useI18n()
 
 // Estado global
 const globalLoading = ref(false)
@@ -157,6 +167,11 @@ let notificationId = 0
 const exportFilename = computed(() => {
   const date = format(new Date(), 'yyyy-MM-dd')
   return `dosecron-fechas-${date}`
+})
+
+// Locale de date-fns según idioma actual
+const dateLocale = computed(() => {
+  return currentLocale.value === 'en' ? enUS : es
 })
 
 // Funciones de notificaciones
@@ -222,7 +237,7 @@ const onFormCalculate = async (data) => {
 
   } catch (error) {
     console.error('Error al calcular:', error)
-    globalError.value = `Error al calcular fechas: ${error.message}`
+    globalError.value = sanitizeErrorMessage(`Error al calcular fechas: ${error.message}`)
     addNotification('error', 'Error al calcular fechas')
   } finally {
     setLoading(false)
@@ -252,7 +267,7 @@ const onFormExport = (exportData) => {
 
 const onFormError = (errorData) => {
   console.error('Error en formulario:', errorData)
-  globalError.value = `Error: ${errorData.error.message}`
+  globalError.value = sanitizeErrorMessage(`Error: ${errorData.error.message}`)
   addNotification('error', 'Error en el formulario')
 }
 
@@ -277,20 +292,28 @@ const copyResults = async () => {
   if (calculationResults.value.length === 0) return
 
   try {
-    // Formatear fechas para copiar
+    // Formatear fechas para copiar según idioma actual
     const text = calculationResults.value.map((dateString, index) => {
       const date = new Date(dateString)
-      const formatted = format(date, 'EEEE, dd \'de\' MMMM \'de\' yyyy', { locale: es })
+
+      // Usar formato diferente según idioma
+      const formatPattern = currentLocale.value === 'en'
+        ? 'EEEE, MMMM d, yyyy'
+        : "EEEE, dd 'de' MMMM 'de' yyyy"
+
+      const formatted = format(date, formatPattern, { locale: dateLocale.value })
       return `${index + 1}. ${formatted}`
     }).join('\n')
 
     await navigator.clipboard.writeText(text)
 
-    addNotification('success', '📋 Fechas copiadas al portapapeles')
+    // Usar notificación traducida específica para copy
+    addNotification('success', `📋 ${t('results.copySuccess')}`)
 
   } catch (error) {
     console.error('Error al copiar:', error)
-    addNotification('error', '❌ Error al copiar al portapapeles')
+    // Usar notificación de error traducida específica para copy
+    addNotification('error', `❌ ${t('results.copyError')}`)
   }
 }
 
@@ -305,19 +328,26 @@ const clearGlobalError = () => {
   globalError.value = ''
 }
 
+// Error handler para cleanup
+const globalErrorHandler = (event) => {
+  console.error('Error no manejado:', event.error)
+  globalError.value = sanitizeErrorMessage('Ha ocurrido un error inesperado')
+}
+
 // Inicialización
 onMounted(() => {
-
   // Configurar listeners para errores
-  window.addEventListener('error', (event) => {
-    console.error('Error no manejado:', event.error)
-    globalError.value = 'Ha ocurrido un error inesperado'
-  })
+  window.addEventListener('error', globalErrorHandler)
 
   // Notificación de bienvenida
   setTimeout(() => {
-    addNotification('info', '¡Bienvenido a DoseCron! Configura tus parámetros para empezar.', 5000)
+    addNotification('info', t('notifications.welcome'), 5000)
   }, 1000)
+})
+
+// Cleanup
+onUnmounted(() => {
+  window.removeEventListener('error', globalErrorHandler)
 })
 </script>
 
