@@ -84,6 +84,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { getCountries } from '../services/holidayApi.js'
 import { useI18n } from '../composables/useI18n.js'
+import { generateComponentId } from '../utils/componentHelpers.js'
 
 // Props
 const props = defineProps({
@@ -154,7 +155,7 @@ const isLoading = ref(true)
 const internalError = ref('')
 
 // IDs únicos para accesibilidad
-const selectId = computed(() => props.customId || `country-select-${Math.random().toString(36).substr(2, 9)}`)
+const selectId = computed(() => generateComponentId('country-select', props.customId))
 const errorId = computed(() => `${selectId.value}-error`)
 
 // Computed properties

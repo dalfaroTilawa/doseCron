@@ -100,9 +100,10 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { format, parseISO, isValid, isToday, isFuture, isPast } from 'date-fns'
-import { es, enUS } from 'date-fns/locale'
 import { DateValidator } from '../utils/validation.js'
 import { useI18n } from '../composables/useI18n.js'
+import { useDateLocale } from '../composables/useDateLocale.js'
+import { generateComponentId } from '../utils/componentHelpers.js'
 
 // Props
 const props = defineProps({
@@ -194,21 +195,17 @@ const props = defineProps({
 // Eventos
 const emit = defineEmits(['update:modelValue', 'change', 'focus', 'blur', 'error'])
 
-// Composables
-const { t, currentLocale } = useI18n()
-
-// Locale de date-fns según idioma actual
-const dateLocale = computed(() => {
-  return currentLocale.value === 'en' ? enUS : es
-})
+// Composables refactorizados
+const { t } = useI18n()
+const { dateLocale, localeCode } = useDateLocale()
 
 // Estado reactivo
 const isFocused = ref(false)
 const internalError = ref('')
 const hasBeenTouched = ref(false)
 
-// IDs únicos para accesibilidad
-const inputId = computed(() => props.customId || `date-picker-${Math.random().toString(36).substr(2, 9)}`)
+// IDs únicos usando helper
+const inputId = computed(() => generateComponentId('date-picker', props.customId))
 const errorId = computed(() => `${inputId.value}-error`)
 
 // Validación
@@ -255,7 +252,7 @@ const formattedDateInfo = computed(() => {
     const date = parsedDate.value
     const dayName = format(date, 'EEEE', { locale: dateLocale.value })
 
-    const formatPattern = currentLocale.value === 'en'
+    const formatPattern = localeCode.value === 'en'
       ? 'EEEE, MMMM d, yyyy'
       : "EEEE, dd 'de' MMMM 'de' yyyy"
 

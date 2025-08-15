@@ -132,26 +132,31 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { format } from 'date-fns'
-import { es, enUS } from 'date-fns/locale'
 
 // Importar componentes
 import DateForm from './components/DateForm.vue'
 import ResultsList from './components/ResultsList.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
+
+// Importar composables refactorizados
 import { useI18n } from './composables/useI18n.js'
+import { useDateLocale } from './composables/useDateLocale.js'
+import { useDateFormatter } from './composables/useDateFormatter.js'
 import { sanitizeErrorMessage } from './utils/validation.js'
+import { createLoadingState } from './utils/componentHelpers.js'
+import { NOTIFICATION_CONFIG, DATE_FORMATS } from './constants/index.js'
 
 // Referencias
 const mainFormRef = ref(null)
 
-// Composables
-const { t, currentLocale } = useI18n()
+// Composables refactorizados
+const { t } = useI18n()
+const { dateLocale } = useDateLocale()
+const formatter = useDateFormatter()
 
-// Estado global
-const globalLoading = ref(false)
+// Estado global usando helpers
+const loadingState = createLoadingState()
 const globalError = ref('')
-const loadingMessage = ref('')
-
 
 // Estado de resultados
 const showResults = ref(false)
@@ -163,27 +168,39 @@ const calculationHolidays = ref([])
 const notifications = ref([])
 let notificationId = 0
 
+// Extraer loading state
+const globalLoading = computed(() => loadingState.isLoading)
+const loadingMessage = computed(() => loadingState.message)
+
 // Computed properties
 const exportFilename = computed(() => {
-  const date = format(new Date(), 'yyyy-MM-dd')
+  const date = format(new Date(), DATE_FORMATS.FILENAME_DATE)
   return `dosecron-fechas-${date}`
 })
 
-// Locale de date-fns según idioma actual
-const dateLocale = computed(() => {
-  return currentLocale.value === 'en' ? enUS : es
-})
-
-// Funciones de notificaciones
-const addNotification = (type, message, duration = 4000) => {
+// Funciones de notificaciones refactorizadas
+const addNotification = (type, message, duration = null) => {
   const id = ++notificationId
-  notifications.value.push({ id, type, message })
 
-  if (duration > 0) {
-    setTimeout(() => removeNotification(id), duration)
+  // Usar duración de constantes según tipo
+  const defaultDuration = duration || NOTIFICATION_CONFIG[`${type.toUpperCase()}_DURATION`] || NOTIFICATION_CONFIG.DEFAULT_DURATION
+
+  notifications.value.push({
+    id,
+    type,
+    message,
+    timestamp: Date.now()
+  })
+
+  // Limitar número máximo de notificaciones
+  if (notifications.value.length > NOTIFICATION_CONFIG.MAX_NOTIFICATIONS) {
+    notifications.value.shift()
   }
 
-  return id
+  // Auto-remover después del tiempo especificado
+  setTimeout(() => {
+    removeNotification(id)
+  }, defaultDuration)
 }
 
 const removeNotification = (id) => {
@@ -204,10 +221,9 @@ const getNotificationIcon = (type) => {
 }
 
 
-// Funciones de carga
+// Funciones de carga refactorizadas
 const setLoading = (loading, message = '') => {
-  globalLoading.value = loading
-  loadingMessage.value = message
+  loadingState.setLoading(loading, message)
 }
 
 // Handlers del formulario principal
@@ -287,27 +303,16 @@ const onResultsError = (errorData) => {
   addNotification('error', `Error en exportación: ${errorData.error.message}`)
 }
 
-// Funciones de acciones
+// Funciones de acciones refactorizadas
 const copyResults = async () => {
   if (calculationResults.value.length === 0) return
 
   try {
-    // Formatear fechas para copiar según idioma actual
-    const text = calculationResults.value.map((dateString, index) => {
-      const date = new Date(dateString)
-
-      // Usar formato diferente según idioma
-      const formatPattern = currentLocale.value === 'en'
-        ? 'EEEE, MMMM d, yyyy'
-        : "EEEE, dd 'de' MMMM 'de' yyyy"
-
-      const formatted = format(date, formatPattern, { locale: dateLocale.value })
-      return `${index + 1}. ${formatted}`
-    }).join('\n')
+    // Usar formatter refactorizado para generar texto
+    const formattedResults = formatter.formatDateResults(calculationResults.value, calculationHolidays.value)
+    const text = formatter.generateCopyText(formattedResults.dates)
 
     await navigator.clipboard.writeText(text)
-
-    // Usar notificación traducida específica para copy
     addNotification('success', `📋 ${t('results.copySuccess')}`)
 
   } catch (error) {

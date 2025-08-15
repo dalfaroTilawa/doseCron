@@ -88,6 +88,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from '../composables/useI18n.js'
+import { generateComponentId } from '../utils/componentHelpers.js'
 
 // Props
 const props = defineProps({
@@ -162,7 +163,7 @@ const { t } = useI18n()
 
 // IDs únicos para accesibilidad
 const idPrefix = computed(() =>
-  props.customIdPrefix || `filter-options-${Math.random().toString(36).substr(2, 9)}`
+  generateComponentId('filter-options', props.customIdPrefix)
 )
 
 const weekendCheckboxId = computed(() => `${idPrefix.value}-weekends`)

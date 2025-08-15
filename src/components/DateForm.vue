@@ -234,7 +234,7 @@
                       type="button"
                       :class="['flex items-center gap-2 py-3 px-4 bg-surface-secondary border border-border-primary rounded-lg cursor-pointer transition-all duration-200 hover:bg-surface-tertiary hover:border-border-secondary hover:-translate-y-0.5 text-sm text-text-primary font-medium', { 'bg-primary-500 border-primary-500 text-white -translate-y-0.5 shadow-primary-200': !isDarkMode }]"
                       :title="t('theme.lightTitle')"
-                      @click="setTheme('light')"
+                      @click="handleThemeChange('light')"
                     >
                       <span class="text-lg leading-none">☀️</span>
                       <span>{{ t('theme.light') }}</span>
@@ -243,7 +243,7 @@
                       type="button"
                       :class="['flex items-center gap-2 py-3 px-4 bg-surface-secondary border border-border-primary rounded-lg cursor-pointer transition-all duration-200 hover:bg-surface-tertiary hover:border-border-secondary hover:-translate-y-0.5 text-sm text-text-primary font-medium', { 'bg-primary-500 border-primary-500 text-white -translate-y-0.5 shadow-primary-200': isDarkMode }]"
                       :title="t('theme.darkTitle')"
-                      @click="setTheme('dark')"
+                      @click="handleThemeChange('dark')"
                     >
                       <span class="text-lg leading-none">🌙</span>
                       <span>{{ t('theme.dark') }}</span>
@@ -333,7 +333,6 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import { format, parseISO } from 'date-fns'
-import { es, enUS } from 'date-fns/locale'
 
 // Importar componentes
 import DatePicker from './DatePicker.vue'
@@ -341,14 +340,19 @@ import CountrySelector from './CountrySelector.vue'
 import FilterOptions from './FilterOptions.vue'
 import LanguageSwitcher from './LanguageSwitcher.vue'
 
-// Importar composables
+// Importar composables refactorizados
 import { useDateCalculator } from '../composables/useDateCalculator.js'
 import { useSettings } from '../composables/useSettings.js'
 import { useI18n } from '../composables/useI18n.js'
+import { useDateLocale } from '../composables/useDateLocale.js'
+import { useTheme } from '../composables/useTheme.js'
 
-// Importar servicios
+// Importar helpers refactorizados
 import { getCountries } from '../services/holidayApi.js'
 import { DateValidator, ValidatorFactory, DurationValidator, setI18nInstance } from '../utils/validation.js'
+import { handleFormSubmit, generateDefaultFormData, clearFieldErrors } from '../utils/formHelpers.js'
+import { generateConfigSummary } from '../utils/configSummaryHelpers.js'
+import { DATE_FORMATS } from '../constants/index.js'
 
 const props = defineProps({
   // Configuración inicial opcional
@@ -385,19 +389,16 @@ const emit = defineEmits([
   'error'
 ])
 
-// Composables
+// Composables refactorizados
 const { settings, saveSetting, loadSetting } = useSettings()
 const calculator = useDateCalculator()
 const i18nInstance = useI18n()
-const { t, validateMessage, errorMessage, formatInterval, currentLocale } = i18nInstance
+const { t, validateMessage, errorMessage, formatInterval } = i18nInstance
+const { dateLocale, localeCode } = useDateLocale()
+const themeManager = useTheme()
 
 // Configurar i18n en validaciones
 setI18nInstance(i18nInstance)
-
-// Locale de date-fns según idioma actual
-const dateLocale = computed(() => {
-  return currentLocale.value === 'en' ? enUS : es
-})
 
 // Estado del formulario
 const formData = reactive({
@@ -423,8 +424,8 @@ const fieldErrors = reactive({
 const isCalculating = ref(false)
 const globalError = ref('')
 
-// Estado del tema
-const isDarkMode = ref(false)
+// Estado del tema (manejado por composable)
+const { isDarkMode, setTheme } = themeManager
 
 // Estado de expansión de secciones
 const showExclusionOptions = ref(false)
@@ -532,43 +533,15 @@ const formWarnings = computed(() => {
   return warnings
 })
 
+// Resumen de configuración usando helper refactorizado
 const configSummary = computed(() => {
-  if (!isFormValid.value) return null
-
-  const startDateObj = parseISO(formData.startDate)
-  const exclusionsList = []
-  if (formData.excludeWeekends) exclusionsList.push(t('exclusions.weekends'))
-  if (formData.excludeHolidays && formData.country) exclusionsList.push(t('exclusions.holidays'))
-
-  const formatPattern = currentLocale.value === 'en'
-    ? 'MMMM d, yyyy'
-    : "d 'de' MMMM 'de' yyyy"
-
-  const intervalText = currentLocale.value === 'en'
-    ? `Every ${formData.interval} day${formData.interval !== 1 ? 's' : ''}`
-    : `Cada ${formData.interval} día${formData.interval !== 1 ? 's' : ''}`
-
-  const getDurationUnit = (unit, count) => {
-    if (currentLocale.value === 'en') {
-      const units = { days: 'day', weeks: 'week', months: 'month', years: 'year' }
-      const unitName = units[unit] || unit
-      return count === 1 ? unitName : unitName + 's'
-    } else {
-      const units = { days: 'día', weeks: 'semana', months: 'mes', years: 'año' }
-      const unitName = units[unit] || unit
-      return count === 1 ? unitName : unitName + 's'
-    }
-  }
-
-  const noneText = t('exclusions.none')
-
-  return {
-    startDate: format(startDateObj, formatPattern, { locale: dateLocale.value }),
-    interval: intervalText,
-    duration: `${formData.duration} ${getDurationUnit(formData.durationUnit, formData.duration)}`,
-    country: selectedCountryName.value,
-    exclusions: exclusionsList.length > 0 ? exclusionsList.join(', ') : noneText
-  }
+  return generateConfigSummary(formData, {
+    localeCode: localeCode.value,
+    dateLocale: dateLocale.value,
+    countriesList: countriesList.value,
+    t,
+    isFormValid: isFormValid.value
+  })
 })
 
 
@@ -622,62 +595,25 @@ const onFieldError = (fieldName, error) => {
   fieldErrors[fieldName] = error.message || t('validation.general')
 }
 
+// Función simplificada usando helper refactorizado
 const handleSubmit = async () => {
-  if (!validateForm()) {
-    globalError.value = t('form.errors.fixBeforeSubmit')
-    return
-  }
-
-  isCalculating.value = true
-  globalError.value = ''
-
-  try {
-    // Actualizar configuración del calculator
-    await calculator.updateConfig({
-      startDate: formData.startDate,
-      interval: formData.interval,
-      duration: formData.duration,
-      durationUnit: formData.durationUnit,
-      country: formData.country,
-      excludeWeekends: formData.excludeWeekends,
-      excludeHolidays: formData.excludeHolidays
-    })
-
-    // Calcular fechas
-    await calculator.calculateDates()
-
-    hasCalculated.value = true
-
-    emit('calculate', {
-      config: { ...formData },
-      results: calculator.calculatedDates.value
-    })
-
-  } catch (error) {
-    console.error('Error al calcular fechas:', error)
-    globalError.value = `${t('form.errors.calculation')}: ${error.message}`
-    emit('error', { action: 'calculate', error })
-  } finally {
-    isCalculating.value = false
-  }
+  await handleFormSubmit({
+    formData,
+    validateForm,
+    calculator,
+    emit,
+    t,
+    refs: { isCalculating, globalError, hasCalculated }
+  })
 }
 
 const resetForm = () => {
-  // Resetear a valores por defecto
-  Object.assign(formData, {
-    startDate: format(new Date(), 'yyyy-MM-dd'),
-    interval: null, // Dejar vacío, requerido
-    duration: null, // Dejar vacío, requerido
-    durationUnit: 'months',
-    country: settings.country || 'CR', // Mantener preferencia del usuario
-    excludeWeekends: loadSetting('excludeWeekends', true), // Mantener preferencia del usuario
-    excludeHolidays: loadSetting('excludeHolidays', true) // Mantener preferencia del usuario
-  })
+  // Resetear usando helper refactorizado
+  const defaultData = generateDefaultFormData(settings, loadSetting)
+  Object.assign(formData, defaultData)
 
-  // Limpiar errores
-  Object.keys(fieldErrors).forEach(key => {
-    fieldErrors[key] = ''
-  })
+  // Limpiar errores usando helper
+  clearFieldErrors(fieldErrors)
 
   // Resetear calculadora
   calculator.reset()
@@ -686,6 +622,11 @@ const resetForm = () => {
   hasCalculated.value = false
 
   emit('reset')
+}
+
+// Funciones de tema simplificadas
+const handleThemeChange = (theme) => {
+  setTheme(theme)
 }
 
 
@@ -726,20 +667,8 @@ const clearGlobalError = () => {
   globalError.value = ''
 }
 
-// Funciones de tema
-const initTheme = () => {
-  const savedTheme = localStorage.getItem('theme')
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-
-  isDarkMode.value = savedTheme === 'dark' || (!savedTheme && prefersDark)
-  document.documentElement.setAttribute('data-theme', isDarkMode.value ? 'dark' : 'light')
-}
-
-const setTheme = (theme) => {
-  isDarkMode.value = theme === 'dark'
-  document.documentElement.setAttribute('data-theme', theme)
-  localStorage.setItem('theme', theme)
-}
+// Funciones de tema ahora manejadas por useTheme() composable
+// Ya no es necesario initTheme ni setTheme manuales
 
 
 // Watch para auto-calcular si está habilitado
@@ -765,7 +694,7 @@ const loadCountries = async () => {
 // Inicialización
 onMounted(async () => {
   loadInitialConfig()
-  initTheme()
+  // initTheme() ya no es necesario - manejado por useTheme()
 
   // Cargar lista de países
   await loadCountries()
