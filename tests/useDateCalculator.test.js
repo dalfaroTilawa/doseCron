@@ -750,4 +750,137 @@ describe('useDateCalculator', () => {
       })
     })
   })
+
+  describe('Tests de regresión para cálculo de intervalos con exclusiones', () => {
+    it('REGRESIÓN: debería calcular intervalos correctamente desde primer día hábil cuando fecha inicial es feriado', async () => {
+      // Caso específico reportado: 15 agosto 2025 (viernes, día de las madres Costa Rica)
+      // Intervalo: 4 días, Duración: 2 semanas
+      // Expected: 18-ago (lun) → 22-ago (vie) → 26-ago (mar), NO 18-ago → 19-ago
+      
+      await calculator.updateConfig({
+        startDate: '2025-08-15', // Viernes, día de las madres en Costa Rica (feriado)
+        interval: 4,
+        duration: 2,
+        durationUnit: 'weeks',
+        country: 'CR',
+        excludeWeekends: true,
+        excludeHolidays: true
+      })
+
+      await calculator.calculateDates()
+      const result = calculator.calculatedDates.value
+
+      // Verificar que se generaron las fechas esperadas
+      expect(result.length).toBeGreaterThan(0)
+
+      // Verificar fechas específicas
+      const dateStrings = result.map(d => d.dateString)
+      
+      // Primera fecha debe ser el primer día hábil (lunes 18 agosto)
+      expect(dateStrings[0]).toBe('2025-08-18') // Lunes (primer día hábil después del feriado)
+      
+      // Segunda fecha debe ser 4 días hábiles después
+      expect(dateStrings[1]).toBe('2025-08-22') // Viernes (18 + 4 = 22, NO 19)
+      
+      // Tercera fecha debe ser 4 días hábiles después (saltando fin de semana)
+      expect(dateStrings[2]).toBe('2025-08-26') // Martes (22 + 4 = 26, saltando sáb-dom)
+
+      // Verificar que las fechas mantienen el intervalo correcto
+      const dates = result.map(d => new Date(d.dateString))
+      
+      for (let i = 1; i < dates.length; i++) {
+        const daysDiff = Math.ceil((dates[i] - dates[i-1]) / (1000 * 60 * 60 * 24))
+        
+        // El intervalo debe ser exactamente 4 días o más (si salta fines de semana)
+        // pero nunca menos de 4 días
+        expect(daysDiff).toBeGreaterThanOrEqual(4)
+        
+        // Y nunca más de 6 días (4 días + máximo 2 días de fin de semana)
+        expect(daysDiff).toBeLessThanOrEqual(6)
+      }
+
+      // Verificar propiedades específicas de las fechas
+      result.forEach((dateInfo, index) => {
+        // Ninguna fecha debe ser fin de semana
+        expect(dateInfo.isWeekend).toBe(false)
+        
+        // Ninguna fecha debe ser feriado  
+        expect(dateInfo.isHoliday).toBe(false)
+        
+        // La primera fecha debe estar marcada como filtrada (movida desde el feriado)
+        if (index === 0) {
+          expect(dateInfo.wasFiltered).toBe(true)
+          expect(dateInfo.originalDate.toISOString().split('T')[0]).toBe('2025-08-15')
+        }
+      })
+
+      console.log('📅 Test de regresión - Fechas calculadas:', dateStrings)
+      console.log('✅ Intervalos verificados correctamente')
+    })
+
+    it('REGRESIÓN: debería mantener intervalos correctos con múltiples exclusiones consecutivas', async () => {
+      // Caso edge: fecha inicial que cae en viernes antes de fin de semana largo
+      await calculator.updateConfig({
+        startDate: '2025-12-26', // Viernes después de Navidad
+        interval: 3,
+        duration: 2,
+        durationUnit: 'weeks',
+        country: 'CR',
+        excludeWeekends: true,
+        excludeHolidays: true
+      })
+
+      await calculator.calculateDates()
+      const result = calculator.calculatedDates.value
+
+      expect(result.length).toBeGreaterThan(0)
+
+      // Verificar que todas las fechas son días hábiles
+      result.forEach((dateInfo, index) => {
+        expect(dateInfo.isWeekend).toBe(false)
+        expect(dateInfo.isHoliday).toBe(false)
+        
+        console.log(`Fecha ${index + 1}: ${dateInfo.dateString} (${dateInfo.dayName})`)
+      })
+
+      // Verificar intervalos mínimos
+      const dates = result.map(d => new Date(d.dateString))
+      for (let i = 1; i < dates.length; i++) {
+        const daysDiff = Math.ceil((dates[i] - dates[i-1]) / (1000 * 60 * 60 * 24))
+        expect(daysDiff).toBeGreaterThanOrEqual(3) // Nunca menos del intervalo especificado
+      }
+    })
+
+    it('REGRESIÓN: debería calcular correctamente cuando todos los días teóricos son válidos', async () => {
+      // Control: verificar que cuando no hay exclusiones, el comportamiento es el esperado
+      await calculator.updateConfig({
+        startDate: '2025-01-06', // Lunes (día hábil normal)
+        interval: 3,
+        duration: 2,
+        durationUnit: 'weeks',
+        country: 'CR',
+        excludeWeekends: false, // Sin exclusiones
+        excludeHolidays: false
+      })
+
+      await calculator.calculateDates()
+      const result = calculator.calculatedDates.value
+
+      // Con 14 días y intervalo de 3: 14÷3 = 4.67 → 4 fechas
+      expect(result.length).toBe(4)
+
+      const dateStrings = result.map(d => d.dateString)
+      
+      // Fechas deben ser exactamente cada 3 días
+      expect(dateStrings[0]).toBe('2025-01-06') // Lunes (inicio)
+      expect(dateStrings[1]).toBe('2025-01-09') // Jueves (6+3)
+      expect(dateStrings[2]).toBe('2025-01-12') // Domingo (9+3)
+      expect(dateStrings[3]).toBe('2025-01-15') // Miércoles (12+3)
+
+      // Verificar que no hay filtrado cuando no hay exclusiones
+      result.forEach(dateInfo => {
+        expect(dateInfo.wasFiltered).toBe(false)
+      })
+    })
+  })
 })
