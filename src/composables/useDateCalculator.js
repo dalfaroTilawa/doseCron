@@ -254,35 +254,42 @@ export function useDateCalculator(initialConfig = {}) {
       // Array para almacenar las fechas calculadas
       const dates = []
 
+      // Obtener la primera fecha válida ajustada desde la fecha inicial
+      let currentValidDate = getNextValidDate(startDate, holidaysMap)
+
       // Generar exactamente numberOfDates fechas
       for (let i = 0; i < numberOfDates; i++) {
-        // Calcular la fecha teórica (sin filtros) usando el intervalo
-        const theoreticalDate = addDays(startDate, i * config.interval)
-
-        // Aplicar filtros si están habilitados para mover a día válido
-        // IMPORTANTE: Los filtros NO cambian el número de fechas, solo las mueven
-        const validDate = getNextValidDate(theoreticalDate, holidaysMap)
-
-        const exclusionInfo = checkExclusions(validDate, holidaysMap)
+        const exclusionInfo = checkExclusions(currentValidDate, holidaysMap)
 
         // Crear objeto de fecha
         const dateInfo = {
-          date: validDate,
-          dateString: format(validDate, 'yyyy-MM-dd'),
-          formatted: format(validDate, 'dd/MM/yyyy'),
-          dayName: format(validDate, 'EEEE', { locale: es }),
-          dayNameShort: format(validDate, 'EEE', { locale: es }),
-          dayOfWeek: validDate.getDay(),
+          date: currentValidDate,
+          dateString: format(currentValidDate, 'yyyy-MM-dd'),
+          formatted: format(currentValidDate, 'dd/MM/yyyy'),
+          dayName: format(currentValidDate, 'EEEE', { locale: es }),
+          dayNameShort: format(currentValidDate, 'EEE', { locale: es }),
+          dayOfWeek: currentValidDate.getDay(),
           isWeekend: exclusionInfo.isWeekend,
           isHoliday: exclusionInfo.isHoliday,
           holiday: exclusionInfo.holiday,
           intervalNumber: i + 1,
-          originalDate: theoreticalDate, // Mantener referencia a la fecha teórica original
-          wasFiltered: theoreticalDate.getTime() !== validDate.getTime() // Indicar si se aplicó filtro
+          originalDate: addDays(startDate, i * config.interval), // Fecha teórica original
+          wasFiltered: false // Se calculará después
         }
 
         dates.push(dateInfo)
+
+        // Para las siguientes fechas, calcular a partir de la fecha válida actual + intervalo
+        if (i < numberOfDates - 1) {
+          const nextTheoreticalDate = addDays(currentValidDate, config.interval)
+          currentValidDate = getNextValidDate(nextTheoreticalDate, holidaysMap)
+        }
       }
+
+      // Actualizar el campo wasFiltered para cada fecha
+      dates.forEach((dateInfo, index) => {
+        dateInfo.wasFiltered = dateInfo.originalDate.getTime() !== dateInfo.date.getTime()
+      })
 
       logger.info(`Cálculo matemático: ${totalDays} días ÷ ${config.interval} intervalo = ${numberOfDates} fechas (exacto)`)
 
