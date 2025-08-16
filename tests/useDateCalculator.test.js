@@ -883,4 +883,103 @@ describe('useDateCalculator', () => {
       })
     })
   })
+
+  describe('Nueva lógica de exclusión de feriados: solo verificar fechas de resultado', () => {
+    it('NUEVA LÓGICA: debería ignorar feriados en días intermedios, solo verificar fechas de resultado', async () => {
+      // Caso específico: hay un feriado entre la fecha inicial y una fecha de resultado
+      // pero el feriado NO coincide con ninguna fecha de resultado
+      await calculator.updateConfig({
+        startDate: '2025-08-10', // Domingo 10 agosto (normal)
+        interval: 7, // Cada 7 días
+        duration: 3, // 3 semanas = 21 días
+        durationUnit: 'weeks',
+        country: 'CR',
+        excludeWeekends: false, // NO excluir fines de semana para enfocarnos en feriados
+        excludeHolidays: true   // SÍ excluir feriados
+      })
+
+      await calculator.calculateDates()
+      const result = calculator.calculatedDates.value
+
+      // Análisis de fechas:
+      // - 10 agosto: fecha inicial (domingo, normal) 
+      // - 15 agosto: día intermedio (viernes, FERIADO - día de las madres)
+      // - 17 agosto: primera fecha de resultado (10 + 7 días)
+      // - 24 agosto: segunda fecha de resultado (17 + 7 días)
+      // - 31 agosto: tercera fecha de resultado (24 + 7 días)
+
+      console.log('\n=== NUEVA LÓGICA: Ignorar feriados intermedios ===')
+      console.log('Configuración:')
+      console.log('- Fecha inicial: 10-ago-2025 (domingo, normal)')
+      console.log('- Intervalo: 7 días') 
+      console.log('- Duración: 21 días (3 semanas)')
+      console.log('- 15-ago: FERIADO intermedio (NO es fecha de resultado)')
+      console.log('- Fechas de resultado: 10-ago, 17-ago, 24-ago')
+      console.log('\nResultados con NUEVA lógica (esperado):')
+
+      const dateStrings = result.map(d => d.dateString)
+      
+      // Con la NUEVA lógica, debería:
+      // 1. Mantener 10-ago como primera fecha (no es feriado)
+      // 2. Calcular 17-ago como segunda fecha (ignorar que 15-ago es feriado)
+      // 3. Calcular 24-ago como tercera fecha
+      
+      expect(result.length).toBe(3) // 21 días ÷ 7 intervalo = 3 fechas exactas
+      expect(dateStrings[0]).toBe('2025-08-10') // Primera fecha: inicial
+      expect(dateStrings[1]).toBe('2025-08-17') // Segunda fecha: 10 + 7 días  
+      expect(dateStrings[2]).toBe('2025-08-24') // Tercera fecha: 17 + 7 días
+
+      // Verificar que ninguna de las fechas finales es feriado
+      result.forEach((dateInfo, index) => {
+        expect(dateInfo.isHoliday).toBe(false) // Ninguna fecha de resultado debe ser feriado
+        console.log(`${index + 1}. ${dateInfo.dateString} (${dateInfo.dayName}) - Feriado: ${dateInfo.isHoliday ? 'SÍ' : 'NO'}`)
+      })
+
+      console.log('✅ Nueva lógica: Solo verifica feriados en fechas de resultado, ignora intermedios')
+    })
+
+    it('NUEVA LÓGICA: debería mover fecha inicial si es feriado, pero calcular normalmente después', async () => {
+      // Caso: fecha inicial ES feriado, pero fechas calculadas no
+      await calculator.updateConfig({
+        startDate: '2025-08-15', // Viernes, día de las madres (FERIADO)
+        interval: 7, // Cada 7 días
+        duration: 2, // 2 semanas = 14 días
+        durationUnit: 'weeks',
+        country: 'CR', 
+        excludeWeekends: true, // Excluir fines de semana
+        excludeHolidays: true  // Excluir feriados
+      })
+
+      await calculator.calculateDates()
+      const result = calculator.calculatedDates.value
+
+      console.log('\n=== NUEVA LÓGICA: Fecha inicial es feriado ===')
+      console.log('Configuración:')
+      console.log('- Fecha inicial: 15-ago-2025 (viernes, FERIADO)')
+      console.log('- Intervalo: 7 días')
+      console.log('\nResultados con NUEVA lógica (esperado):')
+
+      const dateStrings = result.map(d => d.dateString)
+
+      // Con la NUEVA lógica:
+      // 1. Mover 15-ago (feriado) al siguiente día hábil: 18-ago (lunes)
+      // 2. Calcular siguientes fechas desde el día hábil: 18-ago + 7 = 25-ago
+      
+      expect(result.length).toBe(2) // 14 días ÷ 7 intervalo = 2 fechas
+      expect(dateStrings[0]).toBe('2025-08-18') // Primera fecha: movida del feriado al lunes
+      expect(dateStrings[1]).toBe('2025-08-25') // Segunda fecha: 18 + 7 días = 25 (lunes)
+
+      // Verificar propiedades
+      expect(result[0].wasFiltered).toBe(true) // Primera fecha fue movida desde el feriado
+      expect(result[0].originalDate.toISOString().split('T')[0]).toBe('2025-08-15')
+
+      result.forEach((dateInfo, index) => {
+        expect(dateInfo.isWeekend).toBe(false) // Ninguna fecha debe ser fin de semana
+        expect(dateInfo.isHoliday).toBe(false) // Ninguna fecha debe ser feriado
+        console.log(`${index + 1}. ${dateInfo.dateString} (${dateInfo.dayName}) - Feriado: ${dateInfo.isHoliday ? 'SÍ' : 'NO'} - Filtrado: ${dateInfo.wasFiltered ? 'SÍ' : 'NO'}`)
+      })
+
+      console.log('✅ Nueva lógica: Mueve fecha inicial si es feriado, calcula normalmente después')
+    })
+  })
 })

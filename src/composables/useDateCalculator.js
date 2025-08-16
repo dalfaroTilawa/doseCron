@@ -254,36 +254,40 @@ export function useDateCalculator(initialConfig = {}) {
       // Array para almacenar las fechas calculadas
       const dates = []
 
+      // NUEVA LÓGICA: Solo verificar fecha inicial si es feriado/fin de semana
       // Obtener la primera fecha válida ajustada desde la fecha inicial
-      let currentValidDate = getNextValidDate(startDate, holidaysMap)
+      let adjustedStartDate = getNextValidDate(startDate, holidaysMap)
 
       // Generar exactamente numberOfDates fechas
       for (let i = 0; i < numberOfDates; i++) {
-        const exclusionInfo = checkExclusions(currentValidDate, holidaysMap)
+        // NUEVA LÓGICA: Calcular fecha teórica desde la fecha inicial ajustada
+        // Fecha teórica: usar la fecha inicial ajustada + (i * intervalo)
+        const theoreticalDate = addDays(adjustedStartDate, i * config.interval)
+        
+        // NUEVA LÓGICA: Solo verificar si ESTA fecha de resultado específica es feriado/fin de semana
+        // NO verificar días intermedios
+        const finalValidDate = getNextValidDate(theoreticalDate, holidaysMap)
+        
+        const exclusionInfo = checkExclusions(finalValidDate, holidaysMap)
 
         // Crear objeto de fecha
         const dateInfo = {
-          date: currentValidDate,
-          dateString: format(currentValidDate, 'yyyy-MM-dd'),
-          formatted: format(currentValidDate, 'dd/MM/yyyy'),
-          dayName: format(currentValidDate, 'EEEE', { locale: es }),
-          dayNameShort: format(currentValidDate, 'EEE', { locale: es }),
-          dayOfWeek: currentValidDate.getDay(),
+          date: finalValidDate,
+          dateString: format(finalValidDate, 'yyyy-MM-dd'),
+          formatted: format(finalValidDate, 'dd/MM/yyyy'),
+          dayName: format(finalValidDate, 'EEEE', { locale: es }),
+          dayNameShort: format(finalValidDate, 'EEE', { locale: es }),
+          dayOfWeek: finalValidDate.getDay(),
           isWeekend: exclusionInfo.isWeekend,
           isHoliday: exclusionInfo.isHoliday,
           holiday: exclusionInfo.holiday,
           intervalNumber: i + 1,
-          originalDate: addDays(startDate, i * config.interval), // Fecha teórica original
+          // Fecha original teórica: desde la fecha inicial ORIGINAL (no ajustada)
+          originalDate: addDays(startDate, i * config.interval),
           wasFiltered: false // Se calculará después
         }
 
         dates.push(dateInfo)
-
-        // Para las siguientes fechas, calcular a partir de la fecha válida actual + intervalo
-        if (i < numberOfDates - 1) {
-          const nextTheoreticalDate = addDays(currentValidDate, config.interval)
-          currentValidDate = getNextValidDate(nextTheoreticalDate, holidaysMap)
-        }
       }
 
       // Actualizar el campo wasFiltered para cada fecha
