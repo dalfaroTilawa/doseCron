@@ -256,18 +256,18 @@ export function useDateCalculator(initialConfig = {}) {
 
       // NUEVA LÓGICA: Solo verificar fecha inicial si es feriado/fin de semana
       // Obtener la primera fecha válida ajustada desde la fecha inicial
-      let adjustedStartDate = getNextValidDate(startDate, holidaysMap)
+      const adjustedStartDate = getNextValidDate(startDate, holidaysMap)
 
       // Generar exactamente numberOfDates fechas
       for (let i = 0; i < numberOfDates; i++) {
         // NUEVA LÓGICA: Calcular fecha teórica desde la fecha inicial ajustada
         // Fecha teórica: usar la fecha inicial ajustada + (i * intervalo)
         const theoreticalDate = addDays(adjustedStartDate, i * config.interval)
-        
+
         // NUEVA LÓGICA: Solo verificar si ESTA fecha de resultado específica es feriado/fin de semana
         // NO verificar días intermedios
         const finalValidDate = getNextValidDate(theoreticalDate, holidaysMap)
-        
+
         const exclusionInfo = checkExclusions(finalValidDate, holidaysMap)
 
         // Crear objeto de fecha

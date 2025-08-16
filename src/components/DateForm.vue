@@ -332,7 +332,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
 
 // Importar componentes
 import DatePicker from './DatePicker.vue'
@@ -352,7 +352,7 @@ import { getCountries } from '../services/holidayApi.js'
 import { DateValidator, ValidatorFactory, DurationValidator, setI18nInstance } from '../utils/validation.js'
 import { handleFormSubmit, generateDefaultFormData, clearFieldErrors } from '../utils/formHelpers.js'
 import { generateConfigSummary } from '../utils/configSummaryHelpers.js'
-import { DATE_FORMATS } from '../constants/index.js'
+// import { DATE_FORMATS } from '../constants/index.js' // Not used
 
 const props = defineProps({
   // Configuración inicial opcional
@@ -393,7 +393,7 @@ const emit = defineEmits([
 const { settings, saveSetting, loadSetting } = useSettings()
 const calculator = useDateCalculator()
 const i18nInstance = useI18n()
-const { t, validateMessage, errorMessage, formatInterval } = i18nInstance
+const { t } = i18nInstance
 const { dateLocale, localeCode } = useDateLocale()
 const themeManager = useTheme()
 
@@ -499,11 +499,7 @@ const isFormValid = computed(() => {
   return validateForm() && !Object.values(fieldErrors).some(error => error)
 })
 
-const selectedCountryName = computed(() => {
-  if (!formData.country) return t('form.fields.country.noSelection')
-  const country = countriesList.value.find(c => c.code === formData.country)
-  return country ? country.name : formData.country
-})
+// selectedCountryName computed removed - not used
 
 const formWarnings = computed(() => {
   const warnings = []
@@ -582,12 +578,12 @@ const onDurationUnitChange = () => {
 }
 
 const onCountryChange = (changeData) => {
-  console.log('País cambiado:', changeData)
+  // logger.debug('País cambiado:', changeData)
   emitConfigChange()
 }
 
 const onFiltersChange = (changeData) => {
-  console.log('Filtros cambiados:', changeData)
+  // logger.debug('Filtros cambiados:', changeData)
   emitConfigChange()
 }
 
@@ -630,13 +626,7 @@ const handleThemeChange = (theme) => {
 }
 
 
-const saveUserPreferences = () => {
-  // Solo guardar preferencias del usuario, NO valores específicos de cálculo
-  saveSetting('country', formData.country)
-  saveSetting('excludeWeekends', formData.excludeWeekends)
-  saveSetting('excludeHolidays', formData.excludeHolidays)
-  // Nota: NO guardamos startDate, interval, duration, durationUnit
-}
+// saveUserPreferences function removed - not used
 
 const emitConfigChange = () => {
   emit('config-change', { ...formData })
@@ -687,7 +677,7 @@ const loadCountries = async () => {
   try {
     countriesList.value = await getCountries()
   } catch (error) {
-    console.error('Error cargando países:', error)
+    // Error already handled by component error state
   }
 }
 

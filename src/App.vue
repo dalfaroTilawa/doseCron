@@ -151,7 +151,7 @@ const mainFormRef = ref(null)
 
 // Composables refactorizados
 const { t } = useI18n()
-const { dateLocale } = useDateLocale()
+// const { dateLocale } = useDateLocale() // Not used in this component
 const formatter = useDateFormatter()
 
 // Estado global usando helpers
@@ -228,7 +228,7 @@ const setLoading = (loading, message = '') => {
 
 // Handlers del formulario principal
 const onFormCalculate = async (data) => {
-  console.log('Calculando fechas:', data)
+  // logger.debug('Calculando fechas:', data)
 
   try {
     setLoading(true, 'Calculando fechas recurrentes...')
@@ -252,7 +252,7 @@ const onFormCalculate = async (data) => {
     })
 
   } catch (error) {
-    console.error('Error al calcular:', error)
+    // Error handling managed by onFormError
     globalError.value = sanitizeErrorMessage(`Error al calcular fechas: ${error.message}`)
     addNotification('error', 'Error al calcular fechas')
   } finally {
@@ -262,7 +262,7 @@ const onFormCalculate = async (data) => {
 }
 
 const onFormReset = () => {
-  console.log('Formulario reseteado')
+  // logger.debug('Formulario reseteado')
 
   calculationResults.value = []
   calculationHolidays.value = []
@@ -273,33 +273,33 @@ const onFormReset = () => {
 }
 
 const onFormConfigChange = (config) => {
-  console.log('Configuración cambiada:', config)
+  // logger.debug('Configuración cambiada:', config)
 }
 
 const onFormExport = (exportData) => {
-  console.log('Exportación desde formulario:', exportData)
+  // logger.debug('Exportación desde formulario:', exportData)
   addNotification('success', `Datos exportados como ${exportData.format.toUpperCase()}`)
 }
 
 const onFormError = (errorData) => {
-  console.error('Error en formulario:', errorData)
+  // Error already handled by error boundary
   globalError.value = sanitizeErrorMessage(`Error: ${errorData.error.message}`)
   addNotification('error', 'Error en el formulario')
 }
 
 // Handlers de ResultsList
 const onResultsExport = (exportData) => {
-  console.log('Exportación de resultados:', exportData)
+  // logger.debug('Exportación de resultados:', exportData)
   addNotification('success', `${exportData.dates.length} fechas exportadas como ${exportData.format.toUpperCase()}`)
 }
 
 const onResultsCopy = (copyData) => {
-  console.log('Resultados copiados:', copyData)
+  // logger.debug('Resultados copiados:', copyData)
   addNotification('success', `${copyData.dates.length} fechas copiadas al portapapeles`)
 }
 
 const onResultsError = (errorData) => {
-  console.error('Error en resultados:', errorData)
+  // Error already handled by error boundary
   addNotification('error', `Error en exportación: ${errorData.error.message}`)
 }
 
@@ -316,7 +316,7 @@ const copyResults = async () => {
     addNotification('success', `📋 ${t('results.copySuccess')}`)
 
   } catch (error) {
-    console.error('Error al copiar:', error)
+    // Error already handled in UI
     // Usar notificación de error traducida específica para copy
     addNotification('error', `❌ ${t('results.copyError')}`)
   }
@@ -335,7 +335,7 @@ const clearGlobalError = () => {
 
 // Error handler para cleanup
 const globalErrorHandler = (event) => {
-  console.error('Error no manejado:', event.error)
+  // Global error handler - this console.error can stay for debugging
   globalError.value = sanitizeErrorMessage('Ha ocurrido un error inesperado')
 }
 

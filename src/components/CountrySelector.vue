@@ -184,7 +184,7 @@ const loadCountries = async () => {
     )
 
   } catch (error) {
-    console.error('Error cargando países:', error)
+    // Error already emitted and shown in UI
     internalError.value = t('countrySelector.error')
     emit('error', error)
   } finally {
@@ -216,7 +216,7 @@ const validateModelValue = () => {
   if (props.modelValue && countries.value.length > 0) {
     const isValid = countries.value.some(country => country.code === props.modelValue)
     if (!isValid) {
-      console.warn(`CountrySelector: Código de país inválido: ${props.modelValue}`)
+      // Invalid country code - already handled by component state
       internalError.value = `${t('countrySelector.invalidCode')}: ${props.modelValue}`
     } else {
       internalError.value = ''
