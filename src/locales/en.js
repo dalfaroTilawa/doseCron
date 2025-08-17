@@ -32,9 +32,17 @@ export default {
         required: 'Start date *'
       },
       interval: {
-        label: 'Interval (days)',
-        placeholder: 'Ex: 7 for weekly',
-        helpText: 'Number of days between each recurring date'
+        label: 'Interval',
+        placeholder: 'Ex: 7',
+        placeholderDays: 'Ex: 15',
+        placeholderWeeks: 'Ex: 2',
+        placeholderMonths: 'Ex: 1',
+        helpText: 'Frequency of date repetition'
+      },
+      intervalUnit: {
+        days: 'Days',
+        weeks: 'Weeks',
+        months: 'Months'
       },
       duration: {
         label: 'Duration',

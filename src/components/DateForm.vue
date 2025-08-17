@@ -61,31 +61,45 @@
               {{ t('form.fields.interval.label') }} *
               <span class="text-error-500">*</span>
             </label>
-            <div class="relative">
-              <input
-                id="interval"
-                v-model.number="formData.interval"
-                type="number"
-                min="1"
-                max="365"
-                step="1"
-                :class="['w-full pr-20 py-3 px-4 border rounded-base bg-surface-primary text-text-primary placeholder-text-placeholder transition-all duration-fast focus:outline-none focus:ring-3 focus:ring-primary-500/10 focus:border-border-focus', { 'border-error-500': fieldErrors.interval, 'border-border-primary': !fieldErrors.interval }]"
-                :aria-invalid="!!fieldErrors.interval"
-                :aria-describedby="fieldErrors.interval ? 'interval-error' : 'interval-help'"
-                :placeholder="t('form.fields.interval.placeholder')"
-                required
-                @input="onIntervalChange"
-                @blur="validateInterval"
-              >
-              <span class="absolute right-12 top-1/2 -translate-y-1/2 text-sm text-text-muted font-medium pointer-events-none">{{ t('form.texts.days') }}</span>
+            <div class="flex gap-3">
+              <div class="flex-1">
+                <input
+                  id="interval"
+                  v-model.number="formData.interval"
+                  type="number"
+                  min="1"
+                  :max="intervalMaxValue"
+                  step="1"
+                  :class="['w-full py-3 px-4 border rounded-base bg-surface-primary text-text-primary placeholder-text-placeholder transition-all duration-fast focus:outline-none focus:ring-3 focus:ring-primary-500/10 focus:border-border-focus', { 'border-error-500': fieldErrors.interval, 'border-border-primary': !fieldErrors.interval }]"
+                  :aria-invalid="!!fieldErrors.interval"
+                  :aria-describedby="fieldErrors.interval ? 'interval-error' : 'interval-help'"
+                  :placeholder="intervalPlaceholder"
+                  required
+                  @input="onIntervalChange"
+                  @blur="validateInterval"
+                >
+              </div>
+              <div class="w-32">
+                <select
+                  id="intervalUnit"
+                  v-model="formData.intervalUnit"
+                  :class="['w-full py-3 px-4 border rounded-base bg-surface-primary text-text-primary transition-all duration-fast focus:outline-none focus:ring-3 focus:ring-primary-500/10 focus:border-border-focus', { 'border-error-500': fieldErrors.intervalUnit, 'border-border-primary': !fieldErrors.intervalUnit }]"
+                  :aria-invalid="!!fieldErrors.intervalUnit"
+                  @change="onIntervalUnitChange"
+                >
+                  <option value="days">{{ t('form.fields.intervalUnit.days') }}</option>
+                  <option value="weeks">{{ t('form.fields.intervalUnit.weeks') }}</option>
+                  <option value="months">{{ t('form.fields.intervalUnit.months') }}</option>
+                </select>
+              </div>
             </div>
             <div
-              v-if="fieldErrors.interval"
+              v-if="fieldErrors.interval || fieldErrors.intervalUnit"
               id="interval-error"
               class="text-sm text-error-600 mt-2 flex items-center gap-2"
               role="alert"
             >
-              {{ fieldErrors.interval }}
+              {{ fieldErrors.interval || fieldErrors.intervalUnit }}
             </div>
             <div v-else id="interval-help" class="text-sm text-text-muted mt-2 font-medium">
               {{ t('form.fields.interval.helpText') }}
@@ -404,6 +418,7 @@ setI18nInstance(i18nInstance)
 const formData = reactive({
   startDate: '',
   interval: null, // Iniciar vacío, será requerido
+  intervalUnit: 'days', // Nueva propiedad para unidades de intervalo
   duration: null, // Iniciar vacío, será requerido
   durationUnit: 'months',
   country: '',
@@ -415,6 +430,7 @@ const formData = reactive({
 const fieldErrors = reactive({
   startDate: '',
   interval: '',
+  intervalUnit: '', // Validación para nueva unidad de intervalo
   duration: '',
   durationUnit: '',
   country: '',
@@ -474,6 +490,7 @@ const validateDuration = ValidatorFactory.createDurationValidator()
 const validateIntervalVsDuration = () => {
   const result = DurationValidator.validateIntervalVsDuration(
     formData.interval,
+    formData.intervalUnit,
     formData.duration,
     formData.durationUnit
   )
@@ -499,7 +516,24 @@ const isFormValid = computed(() => {
   return validateForm() && !Object.values(fieldErrors).some(error => error)
 })
 
-// selectedCountryName computed removed - not used
+// Computed properties para intervalos con unidades
+const intervalMaxValue = computed(() => {
+  switch (formData.intervalUnit) {
+    case 'days': return 365 // 1 año
+    case 'weeks': return 52 // 1 año
+    case 'months': return 12 // 1 año
+    default: return 365
+  }
+})
+
+const intervalPlaceholder = computed(() => {
+  switch (formData.intervalUnit) {
+    case 'days': return t('form.fields.interval.placeholderDays') || 'Ej: 15'
+    case 'weeks': return t('form.fields.interval.placeholderWeeks') || 'Ej: 2'
+    case 'months': return t('form.fields.interval.placeholderMonths') || 'Ej: 1'
+    default: return 'Ej: 15'
+  }
+})
 
 const formWarnings = computed(() => {
   const warnings = []
@@ -572,6 +606,20 @@ const onDurationChange = () => {
 const onDurationUnitChange = () => {
   if (props.realtimeValidation) {
     // Validar intervalo vs duración cuando cambia la unidad
+    validateIntervalVsDuration()
+  }
+  emitConfigChange()
+}
+
+const onIntervalUnitChange = () => {
+  // Limpiar errores de intervalo cuando cambia la unidad
+  fieldErrors.intervalUnit = ''
+  
+  // Revalidar intervalo con nueva unidad si hay valor
+  if (formData.interval && props.realtimeValidation) {
+    const result = validateInterval(formData.interval)
+    fieldErrors.interval = result.error
+    // También validar intervalo vs duración
     validateIntervalVsDuration()
   }
   emitConfigChange()

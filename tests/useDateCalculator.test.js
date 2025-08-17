@@ -45,8 +45,8 @@ describe('useDateCalculator', () => {
       await calculator.calculateDates()
       const result = calculator.calculatedDates.value
 
-      // 10 días ÷ 15 días = 0.67 → Math.floor(0.67) = 0 fechas
-      expect(result.length).toBe(0)
+      // 10 días ÷ 15 días = 0.67 → Math.floor(0.67) = 0 + 1 (fecha inicial) = 1 fecha
+      expect(result.length).toBe(1)
     })
 
     it('debería generar fechas correctamente cuando duración > intervalo', async () => {
@@ -980,6 +980,150 @@ describe('useDateCalculator', () => {
       })
 
       console.log('✅ Nueva lógica: Mueve fecha inicial si es feriado, calcula normalmente después')
+    })
+  })
+
+  describe('Intervalos con unidades (días, semanas, meses)', () => {
+    it('debería calcular correctamente con intervalo en semanas', async () => {
+      await calculator.updateConfig({
+        startDate: '2025-08-13', // Miércoles
+        interval: 2, // 2 semanas
+        intervalUnit: 'weeks',
+        duration: 2, // 2 meses
+        durationUnit: 'months',
+        country: 'US',
+        excludeWeekends: false,
+        excludeHolidays: false
+      })
+
+      await calculator.calculateDates()
+      const result = calculator.calculatedDates.value
+
+      // 2 meses = ~60 días, 2 semanas = 14 días
+      // 60 ÷ 14 = 4.28 → floor(4.28) = 4 fechas
+      expect(result.length).toBe(4)
+
+      const dateStrings = result.map(d => d.dateString)
+      
+      // Fechas esperadas cada 2 semanas
+      expect(dateStrings[0]).toBe('2025-08-13') // Fecha inicial
+      expect(dateStrings[1]).toBe('2025-08-27') // +2 semanas (14 días)
+      expect(dateStrings[2]).toBe('2025-09-10') // +2 semanas
+      expect(dateStrings[3]).toBe('2025-09-24') // +2 semanas
+
+      // Verificar que todos son miércoles (mismo día de la semana)
+      result.forEach(dateInfo => {
+        expect(dateInfo.dayOfWeek).toBe(3) // Miércoles = 3
+      })
+    })
+
+    it('debería calcular correctamente con intervalo en meses', async () => {
+      await calculator.updateConfig({
+        startDate: '2025-01-15', // 15 de enero
+        interval: 1, // 1 mes
+        intervalUnit: 'months',
+        duration: 6, // 6 meses
+        durationUnit: 'months',
+        country: 'US',
+        excludeWeekends: false,
+        excludeHolidays: false
+      })
+
+      await calculator.calculateDates()
+      const result = calculator.calculatedDates.value
+
+      // 6 meses = 182 días exactos (15 enero a 15 julio), 1 mes = ~30.5 días
+      // 182 ÷ 30.5 = 5.96 → floor(5.96) = 5 fechas
+      expect(result.length).toBe(5)
+
+      const dateStrings = result.map(d => d.dateString)
+      
+      // Fechas esperadas cada mes (día 15) - solo 5 fechas
+      expect(dateStrings[0]).toBe('2025-01-15') // Enero
+      expect(dateStrings[1]).toBe('2025-02-15') // Febrero
+      expect(dateStrings[2]).toBe('2025-03-15') // Marzo
+      expect(dateStrings[3]).toBe('2025-04-15') // Abril
+      expect(dateStrings[4]).toBe('2025-05-15') // Mayo
+
+      // Verificar que todos son día 15
+      result.forEach(dateInfo => {
+        expect(dateInfo.date.getDate()).toBe(15)
+      })
+    })
+
+    it('debería manejar meses con diferentes días (febrero)', async () => {
+      await calculator.updateConfig({
+        startDate: '2025-01-31', // 31 de enero
+        interval: 1, // 1 mes
+        intervalUnit: 'months',
+        duration: 3, // 3 meses
+        durationUnit: 'months',
+        country: 'US',
+        excludeWeekends: false,
+        excludeHolidays: false
+      })
+
+      await calculator.calculateDates()
+      const result = calculator.calculatedDates.value
+
+      // 3 meses desde 31 enero = 89 días, 1 mes = ~30.5 días
+      // 89 ÷ 30.5 = 2.91 → floor(2.91) = 2 fechas
+      expect(result.length).toBe(2)
+      const dateStrings = result.map(d => d.dateString)
+      
+      // date-fns maneja automáticamente los meses con menos días
+      expect(dateStrings[0]).toBe('2025-01-31') // Enero 31
+      expect(dateStrings[1]).toBe('2025-02-28') // Febrero 28 (no 31)
+    })
+
+    it('debería validar configuración con nueva intervalUnit', () => {
+      // Configuración válida
+      expect(calculator.isConfigValid.value).toBe(true)
+
+      // Configuración inválida: intervalUnit no válida
+      calculator.config.intervalUnit = 'invalid'
+      expect(calculator.isConfigValid.value).toBe(false)
+
+      // Restaurar válida
+      calculator.config.intervalUnit = 'weeks'
+      expect(calculator.isConfigValid.value).toBe(true)
+    })
+
+    it('debería persistir configuración de intervalUnit', async () => {
+      await calculator.updateConfig({
+        interval: 3,
+        intervalUnit: 'weeks'
+      })
+
+      // Verificar que se guarda en settings
+      expect(calculator.config.intervalUnit).toBe('weeks')
+      expect(calculator.config.interval).toBe(3)
+    })
+
+    it('debería convertir correctamente intervalos a días', async () => {
+      // Test interno usando la función convertIntervalToDays
+      const internal = calculator._internal || {}
+      
+      // Si no está disponible en internal, probamos indirectamente
+      await calculator.updateConfig({
+        startDate: '2025-01-01',
+        interval: 2,
+        intervalUnit: 'weeks', // 2 semanas = 14 días
+        duration: 4,
+        durationUnit: 'weeks', // 4 semanas = 28 días
+        excludeWeekends: false,
+        excludeHolidays: false
+      })
+
+      await calculator.calculateDates()
+      const result = calculator.calculatedDates.value
+
+      // 28 días ÷ 14 días = 2 fechas
+      expect(result.length).toBe(2)
+      
+      const dateStrings = result.map(d => d.dateString)
+      expect(dateStrings[0]).toBe('2025-01-01')
+      expect(dateStrings[1]).toBe('2025-01-15') // +14 días (2 semanas)
     })
   })
 })

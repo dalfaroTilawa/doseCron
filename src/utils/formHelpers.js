@@ -22,6 +22,7 @@ export const validateAndPrepareConfig = (formData, validateForm, t) => {
   const config = {
     startDate: formData.startDate,
     interval: formData.interval,
+    intervalUnit: formData.intervalUnit, // ✅ AGREGADO: unidad del intervalo
     duration: formData.duration,
     durationUnit: formData.durationUnit,
     country: formData.country,

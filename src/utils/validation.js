@@ -408,13 +408,36 @@ export class DurationValidator {
   }
 
   /**
+   * Convierte un intervalo con unidad a días
+   * @param {number} interval - Número de unidades
+   * @param {string} intervalUnit - Unidad del intervalo
+   * @returns {number} Intervalo en días
+   */
+  static convertIntervalToDays(interval, intervalUnit) {
+    if (!interval || interval <= 0) return 0
+
+    switch (intervalUnit) {
+      case 'days':
+        return interval
+      case 'weeks':
+        return interval * 7
+      case 'months':
+        // Usar 30.5 días como promedio mensual (365.25/12)
+        return Math.round(interval * 30.5)
+      default:
+        return interval
+    }
+  }
+
+  /**
    * Valida que el intervalo no sea mayor que la duración
-   * @param {number} interval - Intervalo en días
+   * @param {number} interval - Valor del intervalo
+   * @param {string} intervalUnit - Unidad del intervalo
    * @param {number} duration - Valor de duración
    * @param {string} durationUnit - Unidad de duración
    * @returns {ValidationResult}
    */
-  static validateIntervalVsDuration(interval, duration, durationUnit) {
+  static validateIntervalVsDuration(interval, intervalUnit, duration, durationUnit) {
     // Validar inputs básicos
     if (!interval || interval <= 0) {
       return { isValid: true, error: '' } // No validar si no hay intervalo
@@ -424,19 +447,22 @@ export class DurationValidator {
       return { isValid: true, error: '' } // No validar si no hay duración
     }
 
-    // Convertir duración a días para comparar
+    // Convertir ambos valores a días para comparar
     const durationInDays = this.convertDurationToDays(duration, durationUnit)
+    const intervalInDays = this.convertIntervalToDays(interval, intervalUnit)
 
     // Si el intervalo es mayor que la duración, no se generarán fechas
     // También considerar como problemático cuando están muy cerca (diferencia <= 2 días)
-    const difference = durationInDays - interval
+    const difference = durationInDays - intervalInDays
 
     if (difference <= 0) {
       const durationText = this.getDurationText(duration, durationUnit)
 
+      const intervalText = this.getIntervalText(interval, intervalUnit)
+      
       return {
         isValid: false,
-        error: `El intervalo (${interval} días) es mayor o igual que la duración (${durationText} ≈ ${durationInDays} días). Esto no generará fechas recurrentes.`
+        error: `El intervalo (${intervalText} ≈ ${intervalInDays} días) es mayor o igual que la duración (${durationText} ≈ ${durationInDays} días). Esto no generará fechas recurrentes.`
       }
     }
 
@@ -444,14 +470,31 @@ export class DurationValidator {
     const minDifference = 2
     if (difference <= minDifference && durationUnit !== 'days') {
       const durationText = this.getDurationText(duration, durationUnit)
+      const intervalText = this.getIntervalText(interval, intervalUnit)
 
       return {
         isValid: false,
-        error: `El intervalo (${interval} días) está muy cerca de la duración (${durationText} ≈ ${durationInDays} días). Esto generará muy pocas fechas recurrentes.`
+        error: `El intervalo (${intervalText} ≈ ${intervalInDays} días) está muy cerca de la duración (${durationText} ≈ ${durationInDays} días). Esto generará muy pocas fechas recurrentes.`
       }
     }
 
     return { isValid: true, error: '' }
+  }
+
+  /**
+   * Convierte intervalo a texto legible
+   * @param {number} interval - Valor del intervalo
+   * @param {string} intervalUnit - Unidad del intervalo
+   * @returns {string} Texto descriptivo
+   */
+  static getIntervalText(interval, intervalUnit) {
+    const unitNames = {
+      'days': interval === 1 ? 'día' : 'días',
+      'weeks': interval === 1 ? 'semana' : 'semanas',
+      'months': interval === 1 ? 'mes' : 'meses'
+    }
+
+    return `${interval} ${unitNames[intervalUnit] || intervalUnit}`
   }
 
   /**

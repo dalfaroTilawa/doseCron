@@ -36,9 +36,17 @@ export default {
         required: 'Fecha inicial *'
       },
       interval: {
-        label: 'Intervalo (días)',
-        placeholder: 'Ej: 7 para semanal',
-        helpText: 'Número de días entre cada fecha recurrente'
+        label: 'Intervalo',
+        placeholder: 'Ej: 7',
+        placeholderDays: 'Ej: 15',
+        placeholderWeeks: 'Ej: 2',
+        placeholderMonths: 'Ej: 1',
+        helpText: 'Frecuencia de repetición de las fechas'
+      },
+      intervalUnit: {
+        days: 'Días',
+        weeks: 'Semanas',
+        months: 'Meses'
       },
       duration: {
         label: 'Duración',

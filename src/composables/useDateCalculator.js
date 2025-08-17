@@ -24,6 +24,46 @@ import { APP_CONFIG, logger } from '../config/env.js'
 import { createCacheManager } from '../utils/storage.js'
 
 /**
+ * Convierte un intervalo con unidad a días
+ * @param {number} interval - Número de unidades
+ * @param {string} intervalUnit - Unidad: 'days', 'weeks', 'months'
+ * @returns {number} Intervalo en días
+ */
+const convertIntervalToDays = (interval, intervalUnit) => {
+  switch (intervalUnit) {
+    case 'days':
+      return interval
+    case 'weeks':
+      return interval * 7
+    case 'months':
+      // Usar 30.5 días como promedio mensual (365.25/12)
+      return Math.round(interval * 30.5)
+    default:
+      return interval
+  }
+}
+
+/**
+ * Agrega un intervalo a una fecha usando date-fns
+ * @param {Date} date - Fecha base
+ * @param {number} interval - Cantidad de unidades
+ * @param {string} intervalUnit - Unidad: 'days', 'weeks', 'months'
+ * @returns {Date} Nueva fecha
+ */
+const addIntervalToDate = (date, interval, intervalUnit) => {
+  switch (intervalUnit) {
+    case 'days':
+      return addDays(date, interval)
+    case 'weeks':
+      return addWeeks(date, interval)
+    case 'months':
+      return addMonths(date, interval)
+    default:
+      return addDays(date, interval)
+  }
+}
+
+/**
  * Composable principal para cálculo de fechas recurrentes
  * @param {Object} initialConfig - Configuración inicial opcional
  * @returns {Object} - Estados reactivos y funciones
@@ -43,6 +83,7 @@ export function useDateCalculator(initialConfig = {}) {
   const config = reactive({
     startDate: initialConfig.startDate || format(new Date(), 'yyyy-MM-dd'),
     interval: initialConfig.interval || loadSetting('defaultInterval', 15),
+    intervalUnit: initialConfig.intervalUnit || loadSetting('defaultIntervalUnit', 'days'),
     duration: initialConfig.duration || loadSetting('defaultDuration', 4),
     durationUnit: initialConfig.durationUnit || loadSetting('defaultDurationUnit', 'months'),
     excludeWeekends: initialConfig.excludeWeekends !== undefined ? initialConfig.excludeWeekends : loadSetting('excludeWeekends', true),
@@ -54,6 +95,7 @@ export function useDateCalculator(initialConfig = {}) {
   const isConfigValid = computed(() => {
     return config.startDate &&
            config.interval > 0 &&
+           ['days', 'weeks', 'months'].includes(config.intervalUnit) &&
            config.duration > 0 &&
            ['days', 'weeks', 'months', 'years'].includes(config.durationUnit)
   })
@@ -230,17 +272,30 @@ export function useDateCalculator(initialConfig = {}) {
       // Calcular fecha final
       const endDate = calculateEndDate(startDate)
 
-      // NUEVO ENFOQUE: Cálculo matemático preciso
-      // Calcular total de días en el período
-      const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+      // NUEVO ENFOQUE: Cálculo directo por unidades (no conversión a días)
+      let numberOfDates = 0
 
-      // Calcular número exacto de fechas usando división entera (redondeo hacia abajo)
-      // CORRECTO: Cada fecha representa un múltiplo del intervalo
-      // - Primera fecha: fecha inicial (representa día 15)
-      // - Segunda fecha: fecha inicial + 15 días (representa día 30)
-      // - Tercera fecha: fecha inicial + 30 días (representa día 45), etc.
-      // 122 días ÷ 15 intervalo = 8.1 → floor(8.1) = 8 fechas totales
-      const numberOfDates = Math.floor(totalDays / config.interval)
+      if (config.intervalUnit === config.durationUnit) {
+        // Misma unidad: dividir directamente
+        // Incluye fecha inicial + intervalos que caben en la duración
+        numberOfDates = Math.floor(config.duration / config.interval) + 1
+      } else {
+        // Unidades diferentes: necesitamos un enfoque más preciso
+        // Contar iterativamente cuántos intervalos caben en el período
+        let currentDate = startDate
+        let count = 1 // Empezar en 1 para incluir fecha inicial
+        const maxIterations = 1000 // Prevenir bucles infinitos
+
+        while (count < maxIterations) {
+          const nextDate = addIntervalToDate(currentDate, config.interval, config.intervalUnit)
+          if (!isBefore(nextDate, endDate)) {
+            break // Salir si la siguiente fecha está fuera del período
+          }
+          count++
+          currentDate = nextDate
+        }
+        numberOfDates = count
+      }
 
       // Validar que el número de fechas sea razonable
       if (numberOfDates <= 0) {
@@ -258,11 +313,17 @@ export function useDateCalculator(initialConfig = {}) {
       // Obtener la primera fecha válida ajustada desde la fecha inicial
       const adjustedStartDate = getNextValidDate(startDate, holidaysMap)
 
-      // Generar exactamente numberOfDates fechas
+      // Generar fechas hasta que se acabe el período o el número de fechas
       for (let i = 0; i < numberOfDates; i++) {
         // NUEVA LÓGICA: Calcular fecha teórica desde la fecha inicial ajustada
-        // Fecha teórica: usar la fecha inicial ajustada + (i * intervalo)
-        const theoreticalDate = addDays(adjustedStartDate, i * config.interval)
+        // usando la función addIntervalToDate que maneja diferentes unidades
+        // i=0 → fecha inicial, i=1 → inicial + 1×intervalo, i=2 → inicial + 2×intervalo
+        const theoreticalDate = addIntervalToDate(adjustedStartDate, i * config.interval, config.intervalUnit)
+
+        // Verificar que la fecha teórica esté dentro del período
+        if (!isBefore(theoreticalDate, endDate) && theoreticalDate.getTime() !== startDate.getTime()) {
+          break // Salir si estamos fuera del período (excepto fecha inicial)
+        }
 
         // NUEVA LÓGICA: Solo verificar si ESTA fecha de resultado específica es feriado/fin de semana
         // NO verificar días intermedios
@@ -283,7 +344,7 @@ export function useDateCalculator(initialConfig = {}) {
           holiday: exclusionInfo.holiday,
           intervalNumber: i + 1,
           // Fecha original teórica: desde la fecha inicial ORIGINAL (no ajustada)
-          originalDate: addDays(startDate, i * config.interval),
+          originalDate: addIntervalToDate(startDate, i * config.interval, config.intervalUnit),
           wasFiltered: false // Se calculará después
         }
 
@@ -295,7 +356,8 @@ export function useDateCalculator(initialConfig = {}) {
         dateInfo.wasFiltered = dateInfo.originalDate.getTime() !== dateInfo.date.getTime()
       })
 
-      logger.info(`Cálculo matemático: ${totalDays} días ÷ ${config.interval} intervalo = ${numberOfDates} fechas (exacto)`)
+      const calculationMethod = config.intervalUnit === config.durationUnit ? 'directo' : 'iterativo'
+      logger.info(`Cálculo ${calculationMethod}: ${config.duration} ${config.durationUnit} ÷ ${config.interval} ${config.intervalUnit} = ${numberOfDates} fechas`)
 
       calculatedDates.value = dates
       return dates
@@ -327,6 +389,9 @@ export function useDateCalculator(initialConfig = {}) {
     }
     if (newConfig.interval && newConfig.interval !== config.interval) {
       saveSetting('defaultInterval', newConfig.interval)
+    }
+    if (newConfig.intervalUnit && newConfig.intervalUnit !== config.intervalUnit) {
+      saveSetting('defaultIntervalUnit', newConfig.intervalUnit)
     }
     if (newConfig.duration && newConfig.duration !== config.duration) {
       saveSetting('defaultDuration', newConfig.duration)
