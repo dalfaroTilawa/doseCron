@@ -87,9 +87,15 @@
                   :aria-invalid="!!fieldErrors.intervalUnit"
                   @change="onIntervalUnitChange"
                 >
-                  <option value="days">{{ t('form.fields.intervalUnit.days') }}</option>
-                  <option value="weeks">{{ t('form.fields.intervalUnit.weeks') }}</option>
-                  <option value="months">{{ t('form.fields.intervalUnit.months') }}</option>
+                  <option value="days">
+                    {{ t('form.fields.intervalUnit.days') }}
+                  </option>
+                  <option value="weeks">
+                    {{ t('form.fields.intervalUnit.weeks') }}
+                  </option>
+                  <option value="months">
+                    {{ t('form.fields.intervalUnit.months') }}
+                  </option>
                 </select>
               </div>
             </div>
@@ -614,7 +620,7 @@ const onDurationUnitChange = () => {
 const onIntervalUnitChange = () => {
   // Limpiar errores de intervalo cuando cambia la unidad
   fieldErrors.intervalUnit = ''
-  
+
   // Revalidar intervalo con nueva unidad si hay valor
   if (formData.interval && props.realtimeValidation) {
     const result = validateInterval(formData.interval)

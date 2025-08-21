@@ -1,0 +1,18 @@
+## Principios Fundamentales
+- Mantén el código limpio y simple siguiendo KISS, DRY y SRP
+- Escribe tests para todo código crítico de negocio
+- Realiza commits atómicos con mensajes descriptivos
+- Nunca incluyas credenciales en el código fuente
+
+## Indicadores de Problemas
+- Funciones que excedan 20 líneas deben ser refactorizadas
+- Cualquier duplicación de código debe ser eliminada
+- La lógica crítica sin tests debe ser cubierta
+- Las credenciales hardcodeadas deben ser externalizadas
+
+## Estilo de Comunicación
+- Proporciona respuestas directas y concisas por defecto
+- Ofrece análisis detallado únicamente cuando sea solicitado explícitamente
+- Sugiere mejoras de forma constructiva sin ser excesivamente crítico
+- Prioriza la claridad y la utilidad en todas las respuestas
+

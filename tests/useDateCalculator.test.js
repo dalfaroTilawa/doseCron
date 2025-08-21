@@ -1011,7 +1011,7 @@ describe('useDateCalculator', () => {
       expect(result.length).toBe(5)
 
       const dateStrings = result.map(d => d.dateString)
-      
+
       // Fechas esperadas cada 2 semanas
       expect(dateStrings[0]).toBe('2025-08-13') // Fecha inicial
       expect(dateStrings[1]).toBe('2025-08-27') // +2 semanas (14 días)
@@ -1044,7 +1044,7 @@ describe('useDateCalculator', () => {
       expect(result.length).toBe(6)
 
       const dateStrings = result.map(d => d.dateString)
-      
+
       // Fechas esperadas cada mes (día 15) - solo 5 fechas
       expect(dateStrings[0]).toBe('2025-01-15') // Enero
       expect(dateStrings[1]).toBe('2025-02-15') // Febrero
@@ -1077,7 +1077,7 @@ describe('useDateCalculator', () => {
       // 89 ÷ 30.5 = 2.91 → floor(2.91) + 1 = 3 fechas
       expect(result.length).toBe(3)
       const dateStrings = result.map(d => d.dateString)
-      
+
       // date-fns maneja automáticamente los meses con menos días
       expect(dateStrings[0]).toBe('2025-01-31') // Enero 31
       expect(dateStrings[1]).toBe('2025-02-28') // Febrero 28 (no 31)
@@ -1110,7 +1110,7 @@ describe('useDateCalculator', () => {
     it('debería convertir correctamente intervalos a días', async () => {
       // Test interno usando la función convertIntervalToDays
       const internal = calculator._internal || {}
-      
+
       // Si no está disponible en internal, probamos indirectamente
       await calculator.updateConfig({
         startDate: '2025-01-01',
@@ -1127,7 +1127,7 @@ describe('useDateCalculator', () => {
 
       // 28 días ÷ 14 días = 2 fechas
       expect(result.length).toBe(2)
-      
+
       const dateStrings = result.map(d => d.dateString)
       expect(dateStrings[0]).toBe('2025-01-01')
       expect(dateStrings[1]).toBe('2025-01-15') // +14 días (2 semanas)

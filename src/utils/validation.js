@@ -459,7 +459,7 @@ export class DurationValidator {
       const durationText = this.getDurationText(duration, durationUnit)
 
       const intervalText = this.getIntervalText(interval, intervalUnit)
-      
+
       return {
         isValid: false,
         error: `El intervalo (${intervalText} ≈ ${intervalInDays} días) es mayor o igual que la duración (${durationText} ≈ ${durationInDays} días). Esto no generará fechas recurrentes.`
