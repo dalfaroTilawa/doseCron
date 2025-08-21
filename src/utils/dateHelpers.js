@@ -54,17 +54,20 @@ export const formatDateWithLocale = (date, localeCode, type, dateLocale) => {
 
 /**
  * Formatea un intervalo en formato legible
- * @param {number} interval - Número de días
+ * @param {number} interval - Número del intervalo
+ * @param {string} intervalUnit - Unidad del intervalo (days, weeks, months)
  * @param {string} localeCode - Código de locale
  * @returns {string} Intervalo formateado
  */
-export const formatInterval = (interval, localeCode = 'es') => {
+export const formatInterval = (interval, intervalUnit = 'days', localeCode = 'es') => {
   if (!interval || interval <= 0) return ''
 
+  const unitText = formatTimeUnit(interval, intervalUnit, localeCode)
+
   if (localeCode === 'en') {
-    return interval === 1 ? 'Every day' : `Every ${interval} days`
+    return `Every ${interval} ${unitText}`
   } else {
-    return interval === 1 ? 'Cada día' : `Cada ${interval} días`
+    return `Cada ${interval} ${unitText}`
   }
 }
 

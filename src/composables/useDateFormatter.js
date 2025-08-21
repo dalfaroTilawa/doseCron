@@ -114,7 +114,7 @@ export function useDateFormatter() {
       )
 
       // Formatear intervalo
-      const intervalText = formatInterval(config.interval, localeCode.value)
+      const intervalText = formatInterval(config.interval, config.intervalUnit, localeCode.value)
 
       // Formatear duración
       const durationText = formatDuration(config.duration, config.durationUnit, localeCode.value)

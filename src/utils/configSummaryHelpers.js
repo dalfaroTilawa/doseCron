@@ -26,12 +26,13 @@ export const formatStartDate = (startDateString, localeCode, dateLocale) => {
 
 /**
  * Genera texto de intervalo localizado
- * @param {number} interval - Número de días
+ * @param {number} interval - Número del intervalo
+ * @param {string} intervalUnit - Unidad del intervalo
  * @param {string} localeCode - Código de locale
  * @returns {string} Texto de intervalo
  */
-export const generateIntervalText = (interval, localeCode) => {
-  return formatInterval(interval, localeCode)
+export const generateIntervalText = (interval, intervalUnit, localeCode) => {
+  return formatInterval(interval, intervalUnit, localeCode)
 }
 
 /**
@@ -108,7 +109,7 @@ export const generateConfigSummary = (formData, options) => {
   try {
     return {
       startDate: formatStartDate(formData.startDate, localeCode, dateLocale),
-      interval: generateIntervalText(formData.interval, localeCode),
+      interval: generateIntervalText(formData.interval, formData.intervalUnit, localeCode),
       duration: generateDurationText(formData.duration, formData.durationUnit, localeCode),
       country: resolveCountryName(formData.country, countriesList, t),
       exclusions: generateExclusionsText(
