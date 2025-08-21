@@ -43,11 +43,16 @@ const manuallyVisible = ref(false)
 
 // Solo visible para desarrollador o cuando se activa manualmente
 const isDeveloper = computed(() => {
+  // Solo visible cuando:
+  // 1. Se activa manualmente desde consola
+  // 2. DEVELOPER_MODE está explícitamente en true
+  // 3. Estamos en desarrollo local (localhost)
+  const isLocalDev = window.location.hostname === 'localhost' || 
+                     window.location.hostname === '127.0.0.1'
+  
   return manuallyVisible.value ||
-         APP_CONFIG.DEVELOPER_MODE || 
-         APP_CONFIG.DEBUG_MODE || 
-         window.location.hostname === 'localhost' ||
-         window.location.hostname === '127.0.0.1'
+         (APP_CONFIG.DEVELOPER_MODE === true) ||
+         (isLocalDev && APP_CONFIG.DEBUG_MODE === true)
 })
 
 // Funciones para control desde consola
