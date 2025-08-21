@@ -126,6 +126,9 @@
         </button>
       </div>
     </div>
+
+    <!-- Analytics para desarrollador -->
+    <VisitStats />
   </div>
 </template>
 
@@ -137,11 +140,13 @@ import { format } from 'date-fns'
 import DateForm from './components/DateForm.vue'
 import ResultsList from './components/ResultsList.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
+import VisitStats from './components/VisitStats.vue'
 
 // Importar composables refactorizados
 import { useI18n } from './composables/useI18n.js'
 import { useDateLocale } from './composables/useDateLocale.js'
 import { useDateFormatter } from './composables/useDateFormatter.js'
+import { useAnalytics } from './composables/useAnalytics.js'
 import { sanitizeErrorMessage } from './utils/validation.js'
 import { createLoadingState } from './utils/componentHelpers.js'
 import { NOTIFICATION_CONFIG, DATE_FORMATS } from './constants/index.js'
@@ -153,6 +158,7 @@ const mainFormRef = ref(null)
 const { t } = useI18n()
 // const { dateLocale } = useDateLocale() // Not used in this component
 const formatter = useDateFormatter()
+const { recordCalculation } = useAnalytics()
 
 // Estado global usando helpers
 const loadingState = createLoadingState()
@@ -243,6 +249,9 @@ const onFormCalculate = async (data) => {
 
     showResults.value = true
     addNotification('success', `${data.results.length} fechas calculadas exitosamente`)
+
+    // Registrar cálculo en analytics
+    recordCalculation()
 
     // Scroll a resultados
     await nextTick()

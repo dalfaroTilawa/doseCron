@@ -52,7 +52,8 @@ export const APP_CONFIG = {
   MAX_ITERATIONS: getEnvVar('VITE_MAX_ITERATIONS', 1000, 'number'),
   MAX_ATTEMPTS: getEnvVar('VITE_MAX_ATTEMPTS', 30, 'number'),
   DEBUG_MODE: getEnvVar('VITE_DEBUG_MODE', false, 'boolean'),
-  LOG_LEVEL: getEnvVar('VITE_LOG_LEVEL', 'warn')
+  LOG_LEVEL: getEnvVar('VITE_LOG_LEVEL', 'warn'),
+  DEVELOPER_MODE: getEnvVar('VITE_DEVELOPER_MODE', false, 'boolean')
 }
 
 // =============================================================================

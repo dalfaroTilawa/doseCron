@@ -15,6 +15,15 @@ export default {
     descriptionShort: 'Calculate recurring dates excluding weekends and holidays'
   },
 
+  // Analytics (developer only)
+  analytics: {
+    visits: 'Visits',
+    calculations: 'Calculations',
+    daysActive: 'Active days',
+    clearStats: 'Clear statistics',
+    devMode: 'Developer mode'
+  },
+
   // Main form
   form: {
     // Section titles

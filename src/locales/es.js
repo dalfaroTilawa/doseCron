@@ -15,6 +15,15 @@ export default {
     descriptionShort: 'Calcula fechas recurrentes excluyendo fines de semana y feriados'
   },
 
+  // Analytics (solo para desarrollador)
+  analytics: {
+    visits: 'Visitas',
+    calculations: 'Cálculos',
+    daysActive: 'Días activos',
+    clearStats: 'Limpiar estadísticas',
+    devMode: 'Modo desarrollador'
+  },
+
   // Formulario principal
   form: {
     // Títulos de secciones
